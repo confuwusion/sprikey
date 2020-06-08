@@ -23,5 +23,3 @@ On the back-end,
 
 Made by [Glitch](https://glitch.com/)
 -------------------
-
-\ ゜o゜)ノ
