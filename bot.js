@@ -1,3 +1,5 @@
+console.log("HTest esit");
+
 // Modules
 const fs = require("fs");
 const Keyv = require("keyv");
