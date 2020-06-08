@@ -5,9 +5,10 @@
   "name": "hello-express",
   "version": "0.5.1",
   "description": "A simple Node app built on Express, instantly up and running.",
-  "main": "bot.js",
+  "main": "src/bot.js",
   "scripts": {
-    "start": "node bot.js"
+    "build": "tsc",
+    "start": "node src/bot.js"
   },
   "dependencies": {
     "@keyv/sqlite": "^2.0.2",
