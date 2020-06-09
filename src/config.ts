@@ -1,57 +1,121 @@
-module.exports = {
-  team: {
-    ["202123395880583168"]: {
-      status: "Bot Owner",
-      hierarchy: 1
+const { ArtPrompt } = require("./structures/ArtPrompt.js");
+const { CacheArray } = require("./structures/CacheArray.js");
+const { CacheMap } = require("./structures/CacheMap.js");
+const { Cache } = require("./structures/Cache.js");
+const { IncrementedStorage } = require("./structures/IncrementedStorage.js");
+const { PermissionsManager } = require("./structures/PermissionsManager.js");
+const { Watcher } = require("./structures/Watcher.js");
+const { WordCensor } = require("./structures/WordCensor.js");
+
+const { MASTER_ID, ROCKHO_ID } = require("./constants.js");
+
+module.exports = function(client, database) {
+  const loadCache = {
+    test: {
+      dataClass: IncrementedStorage
     },
-    ["200965918619074560"]: {
-      status: "Server Owner",
-      hierarchy: 2
+    actionData: {
+      dataClass: IncrementedStorage
     },
-    ["335635421159489547"]: {
-      status: "Admin",
-      hierarchy: 2
+    artPrompts: {
+      dataClass: ArtPrompt
     },
-    ["161326236809822208"]: {
-      status: "Mod",
-      hierarchy: 2
+    botLastActive: {
+      dataClass: Number,
+      generateDefaults: (cache, num) => num || Date.now()
     },
-    ["261915228785082381"]: {
-      status: "Mod",
-      hierarchy: 2
+    characterDictionary: {
+      dataClass: CacheMap
     },
-    ["487451769002000385"]: {
-      status: "Mod",
-      hierarchy: 2
+    jobData: {
+      dataClass: IncrementedStorage
     },
-    ["344265994266476556"]: {
-      status: "Mod",
-      hierarchy: 2
+    leaveRoles: {
+      dataClass: CacheMap
     },
-    ["571879975540490264"]: {
-      status: "Mod",
-      hierarchy: 2
+    lockout: {
+      dataClass: CacheMap
     },
-    ["571880783476817925"]: {
-      status: "Mini Mod",
-      hierarchy: 2
+    logChannels: {
+      dataClass: CacheMap
     },
-    mystiique: {
-      ID: "383868478127603712",
-      role: "minimod"
+    pingRecord: {
+      dataClass: Object
     },
-    lemon_face: {
-      ID: "523956788102692888",
-      role: "minimod"
+    reactionRoles: {
+      dataClass: CacheMap
     },
-    doctor_balakay: {
-      ID: "441493138473746433",
-      role: "minimod"
+    reminders: {
+      dataClass: CacheMap
+    },
+    restartMessage: {
+      dataClass: Object
+    },
+    subcommands: {
+      dataClass: CacheMap
+    },
+    watchPatterns: {
+      dataClass: Watcher
+    },
+    webhook: {
+      dataClass: CacheMap
+    },
+    wordCensor: {
+      dataClass: WordCensor
+    },
+    memberPermissions: {
+      dataClass: PermissionsManager,
+      async generateDefaults(cache, memberPermissions) {
+        const loading = [];
+        
+        const mods = new Set([
+          ...cache.roles.mainMod.members.keys(),
+          ...cache.roles.testMod.members.keys()
+        ]);
+        const admins = new Set([
+          ...cache.roles.mainAdmin.members.keys(),
+          ...cache.roles.testAdmin.members.keys()
+        ]);
+        
+        // Bot Master
+        if (!memberPermissions.has(MASTER_ID)) {
+          loading.push(memberPermissions.set(MASTER_ID, {
+            baseHierarchy: 1,
+            commandHierarchies: {}
+          }));
+        }
+        
+        // Server Owner
+        if (!memberPermissions.has(ROCKHO_ID)) {
+          loading.push(memberPermissions.set(ROCKHO_ID, {
+            baseHierarchy: 2,
+            commandHierarchies: {}
+          }));
+        }
+        
+        // Admin
+        for (const adminID of admins.keys()) {
+          if (memberPermissions.has(adminID)) continue;
+          loading.push(memberPermissions.set(adminID, {
+            baseHierarchy: 3,
+            commandHierarchies: {}
+          }));
+        }
+        
+        // Mod
+        for (const modID of mods.keys()) {
+          if (memberPermissions.has(modID)) continue;
+          loading.push(memberPermissions.set(modID, {
+            baseHierarchy: 4,
+            commandHierarchies: {}
+          }));
+        }
+        
+        await Promise.all(loading);
+        return memberPermissions;
+      }
     }
-  },
-  commandCategories: [
-    "General", // Access 4:3
-    "Moderation", // Access 2:3
-    "Owner" // Access 1:3
-  ]
-};
+  };
+  
+  return new Cache(client, database, loadCache);
+}
