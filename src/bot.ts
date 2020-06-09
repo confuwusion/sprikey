@@ -1,82 +1,67 @@
-console.log("HTest esit");
-
 // Modules
-const fs = require("fs");
-const Keyv = require("keyv");
-const express = require("express");
-const Discord = require("discord.js");
-const sqlite3 = require("sqlite3");
-const bufferJSON = require("json-buffer");
-const { BotPack } = require("./structures/BotPack.js");
-const { DataPack } = require("./structures/DataPack.js");
-const { serialize, deserialize } = require("v8");
+import * as CONSTANTS from "./constants";
+import * as Keyv from "keyv";
+import * as bufferJSON from "json-buffer";
+import * as express from "express/index";
+import * as sqlite3 from "sqlite3/index";
+import { BotPack } from "./structures/BotPack";
+import { Client } from "discord.js";
+import { DataPack } from "./structures/DataPack";
+import { deserialize, serialize } from "v8";
+
 
 const {
   COMMUNIMATE_ID,
   TEST_GUILD_ID,
   ROLES: { ADMIN, MOD, D_ADMIN, D_MOD }
-} = require("./constants.js");
+} = CONSTANTS;
 
 // Database
-const dbFile = "./data/sqlite.db";
-const exists = fs.existsSync(dbFile);
-
+const dbFile = `./data/sqlite.db`;
 const dbHandler = sqlite3.verbose();
 const sqlDB = new dbHandler.Database(dbFile);
-const database = new Keyv('sqlite://./data/sqlite.db', {
-  serialize(data) {
+const database = new Keyv(`sqlite://./data/sqlite.db`, {
+  serialize(data: any) {
     const serialized = serialize(data);
     return bufferJSON.stringify(serialized);
   },
-  deserialize(data) {
-    const dataBuffer = bufferJSON.parse(data);
+  deserialize(data: string) {
+    const dataBuffer: NodeJS.TypedArray = bufferJSON.parse(data);
     return deserialize(dataBuffer);
   }
 });
 
-database.on('error', err => console.error('Keyv connection error:', err));
+database.on(`error`, (err: any) => console.error(`Keyv connection error:`, err));
 
 // ExpressJS
 const app = express();
-app.use(express.static("public"));
-app.get("/", function(request, response) {
-  response.sendFile(__dirname + "/views/index.html");
+app.use(express.static(`public`));
+app.get(`/`, (_request, response) => {
+  response.sendFile(`${__dirname}/views/index.html`);
 });
-const listener = app.listen(
+
+const listener: any = app.listen(
   process.env.PORT,
-  () => console.log("Your app is listening on port " + listener.address().port)
+  () => console.log(`Your app is listening on port ${listener.address().port}`)
 );
 
 // Client
-const client = new Discord.Client({
-  partials: [
-    "MESSAGE",
-    "REACTION",
-    "GUILD_MEMBER",
-    "USER"
-  ],
-  presence: {
-    status: "idle",
-    activity: {
-      name: "Initiating Bot..."
-    }
-  }
-});
+const client = new SpuiiClient();
 
 async function ready() {
   console.timeEnd("Bot Login");
   console.time("Initiation");
   console.log("Bot Connected!");
-  
+
   // Fetch client user if it is not cached
   !client.user.partial && client.user.fetch();
-  
+
   // Load all important data from Discord
   const MAIN_GUILD = client.guilds.cache.get(COMMUNIMATE_ID);
   const TEST_GUILD = client.guilds.cache.get(TEST_GUILD_ID);
-  
+
   const BLANK_ROLE = { members: new Map() };
-  
+
   const [
     mainAdmin, mainMod,
     testAdmin, testMod
@@ -86,20 +71,20 @@ async function ready() {
     TEST_GUILD ? TEST_GUILD.roles.fetch(D_ADMIN) : BLANK_ROLE,
     TEST_GUILD ? TEST_GUILD.roles.fetch(D_MOD) : BLANK_ROLE
   ]);
-  
+
   // Initiating and loading cache
   const cache = require("./cache.js")(client, database);
-  
+
   cache.roles = { mainAdmin, mainMod, testAdmin, testMod };
-  
+
   console.time("Cache Load");
   cache.data_load_status = await cache.loadMissing();
   console.timeEnd("Cache Load");
-  
+
   // Initiating Data pack
   const botPack = new BotPack(cache, client, MAIN_GUILD, TEST_GUILD);
   client.botPack = botPack;
-  
+
   const dataPack = new DataPack(botPack);
   client.dataPack = dataPack;
 
@@ -112,14 +97,14 @@ async function ready() {
     timeEvents: loader.load("./timeEvents", loader.registerTimeEvent)
   };
   cache.loaded_instances = loaded;
-  
+
   cache.loaded_missed_events = dataPack.timeManager.loadMissed();
-  
+
   cache.bot_last_active_interval = setInterval(() => {
     cache.botLastActive = Date.now();
     cache.save("botLastActive");
   }, 15000);
-  
+
   // Setting subcommands
   cache.subcommands.toArray.entries().map(([ subcommandName, {
     inherits,
@@ -127,10 +112,10 @@ async function ready() {
   } ]) => {
     const subbingCommand = dataPack.commands.get(inherits);
     const subCommand = subbingCommand.createSub(subcommandData);
-    
+
     dataPack.commands.set(subcommandName, subCommand);
   });
-  
+
   // Show status as available
   await client.user.setPresence({
     status: "online",
@@ -139,25 +124,25 @@ async function ready() {
       type: "PLAYING"
     }
   });
- 
+
   // Accept events
   botPack.eventState = true;
-  
+
   if (cache.restartMessage.channelID) {
     const { channelID, messageID } = cache.restartMessage;
     const restartMessage = await client.channels.cache.get(channelID).messages.fetch(messageID);
-    
+
     if (restartMessage) {
       (async function() {
         await restartMessage.reactions.removeAll();
         await restartMessage.react("709510035960496149");
       })();
-      
+
       delete cache.restartMessage;
       cache.save("restartMessage");
     }
   }
-  
+
   console.log("Bot is now listening to events!");
   console.timeEnd("Initiation");
 }
