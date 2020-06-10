@@ -1,28 +1,27 @@
-const { displayBigIntTime } = require("../methods/displayTime.js");
+import { displayBigIntTime } from "../../util/displayTime";
 
-class Benchmark {
-  constructor(start) {
-    this.startTime = 0n;
-    this.stopTime = 0n;
-    this.timeTaken = 0n;
-    
+export class Benchmark {
+
+  startTime: bigint = BigInt(0);
+  stopTime: bigint = BigInt(0);
+  timeTaken: bigint = BigInt(0);
+
+  constructor(start?: boolean) {
     if (start) this.start();
   }
-  
-  start() {
+
+  start(): bigint {
     return this.startTime = process.hrtime.bigint();
   }
-  
-  stop() {
+
+  stop(): bigint {
     const stopTime = process.hrtime.bigint();
     this.timeTaken = stopTime - this.startTime;
-    
+
     return this.stopTime = stopTime;
   }
-  
-  display() {
+
+  display(): string {
     return displayBigIntTime(this.timeTaken);
   }
 }
-
-module.exports = { Benchmark };
