@@ -69,7 +69,7 @@
         "func-name-matching": "error",
         "func-names": "off",
         "func-style": [
-            "error",
+            "off",
             "declaration"
         ],
         "function-call-argument-newline": [
