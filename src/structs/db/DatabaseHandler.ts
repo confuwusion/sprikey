@@ -3,12 +3,11 @@ import { EventEmitter } from "events";
 import { deserialize, serialize } from "v8";
 import { deflateRawSync, inflateRawSync, Z_BEST_COMPRESSION } from "zlib";
 
-const DRIVER = `sqlite`;
 const PATH_FOLDER = `../../../data`;
 
 module DataComponents {
-  export interface Key {
-    key: string
+  export interface Key<K> {
+    key: K
   }
 
   export interface Value<V> {
@@ -20,13 +19,13 @@ module DataComponents {
   }
 }
 
-type SqlQueryRow = DataComponents.Key & DataComponents.Value<string>;
+type SqlQueryRow = DataComponents.Key<string> & DataComponents.Value<string>;
 
 type DataPacket<V> = DataComponents.Value<V> & DataComponents.Expiry;
 
-type DataEntry<V> = DataComponents.Key & DataPacket<V>
+type DataEntry<K, V> = DataComponents.Key<K> & DataPacket<V>
 
-class DatabaseHandler {
+class DatabaseHandler<K, V> {
 
   readonly busyTimeout: number = 0;
   readonly db: Promise<sql3DB>;
@@ -76,11 +75,11 @@ class DatabaseHandler {
     });
   }
 
-  namespaceKey(key: string): string {
-    return `${this.namespace}:${key}`;
+  namespaceKey(key: K): string {
+    return `${this.namespace}:${serialize(key).toString("base64")}`;
   }
 
-  async get<T>(key: string): Promise<T | void> {
+  async get(key: K): Promise<V | void> {
     const select = `SELECT value FROM ${
       this.table
     } WHERE key = '${this.namespaceKey(key)}'`;
@@ -94,7 +93,7 @@ class DatabaseHandler {
     return value;
   }
 
-  async set<V>(key: string, value: V, ttl: number = this.ttl): Promise<boolean> {
+  async set(key: K, value: V, ttl: number = this.ttl): Promise<boolean> {
     const preparedData = DatabaseHandler.serialize<V>(value, ttl);
 
     const upsert = `INSERT INTO ${
@@ -110,7 +109,7 @@ class DatabaseHandler {
       .catch(() => false);
   }
 
-  async delete(key: string, brute = false): Promise<boolean> {
+  async delete(key: K, brute = false): Promise<boolean> {
     const namespacedKey = this.namespaceKey(key);
 
     if (!brute) {
@@ -126,14 +125,14 @@ class DatabaseHandler {
     return true;
   }
 
-  async getAll<V = any>(): Promise<DataEntry<V>[]> {
+  async getAll(): Promise<DataEntry<K, V>[]> {
     const selectAll = `SELECT * FROM ${
       this.table
     } WHERE key LIKE '${this.namespace}%'`;
     const rows = await this.query(selectAll);
 
     return rows
-      .map(row => DatabaseHandler.deserialize(row))
+      .map(row => DatabaseHandler.deserialize<K, V>(row))
       .filter(({ expiry, key }) => expiry > Date.now()
         || (this.delete(key, true) && false));
   }
@@ -148,7 +147,7 @@ class DatabaseHandler {
   }
 
   // Any -> Serialized Buffer -> Deflated Buffer -> Deflated Base64 String
-  static serialize<V = any>(rawData: V, ttl: number = 0): string {
+  static serialize<V>(rawData: V, ttl: number = 0): string {
     const serializedData = serialize(rawData);
 
     const deflatedData = deflateRawSync(serializedData, {
@@ -160,7 +159,7 @@ class DatabaseHandler {
   }
 
   // Deflated Base64 String -> Deflated Buffer -> Inflated Buffer -> Any
-  static deserialize<V = any>(row: SqlQueryRow): DataEntry<V> {
+  static deserialize<K, V>(row: SqlQueryRow): DataEntry<K, V> {
     const { key, value } = row;
 
     // Value extraction
@@ -176,7 +175,7 @@ class DatabaseHandler {
     const keyIndex = key.indexOf(`:`) + 1;
 
     return {
-      key: key.slice(keyIndex),
+      key: deserialize(Buffer.from(key.slice(keyIndex), `base64`)),
       value: deserialize(inflatedData),
       expiry
     };
@@ -187,17 +186,23 @@ class DatabaseHandler {
 
 
 
-export class DatabaseCache<V> {
+export class DatabaseCache<K, V> {
 
-  readonly driver: DatabaseHandler;
-  readonly cache: Map<string, DataPacket<V>> = new Map();
+  readonly driver: DatabaseHandler<K, V>;
+  readonly cache: Map<K, DataPacket<V>> = new Map();
 
-  constructor(driver: DatabaseHandler) {
+  constructor(
+    dataFile: string,
+    namespace: string,
+    driver = new DatabaseHandler<K, V>(dataFile, namespace)
+  ) {
     this.driver = driver;
+    this.cacheAll();
   }
 
-  async get(key: any): Promise<V | void> {
-    if (!this.cache.has(key)) return this.driver.get<V>(key);
+
+  async get(key: K): Promise<V | void> {
+    if (!this.cache.has(key)) return this.driver.get(key);
 
     const { value, expiry }: DataPacket<V> = this.cache.get(key)!;
 
@@ -206,13 +211,15 @@ export class DatabaseCache<V> {
     this.driver.delete(key, true) && this.cache.delete(key);
   }
 
-  async set(key: string, value: V, expiry: number): Promise<boolean> {
+
+  async set(key: K, value: V, expiry: number): Promise<boolean> {
     if (expiry < Date.now() && expiry !== 0) return false;
 
     this.cache.set(key, { value, expiry });
 
     return this.driver.set(key, value, expiry);
   }
+
 
   async delete(key: any, cacheOnly = false): Promise<boolean> {
     const databaseDelete = cacheOnly
@@ -224,8 +231,9 @@ export class DatabaseCache<V> {
     return this.cache.delete(key);
   }
 
+
   async cacheAll() {
-    const entries = await this.driver.getAll<V>();
+    const entries = await this.driver.getAll();
 
     entries.map(({ key, ...packet }) => this.cache.set(key, packet));
   }
