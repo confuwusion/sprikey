@@ -1,7 +1,6 @@
-import { Database as sql3DB } from "sqlite3/index";
-import { EventEmitter } from "events";
+import { Z_BEST_COMPRESSION, deflateRawSync, inflateRawSync } from "zlib";
 import { deserialize, serialize } from "v8";
-import { deflateRawSync, inflateRawSync, Z_BEST_COMPRESSION } from "zlib";
+import { Database as sql3DB } from "sqlite3/index";
 
 const PATH_FOLDER = `../../../data`;
 
@@ -76,7 +75,7 @@ class DatabaseHandler<K, V> {
   }
 
   namespaceKey(key: K): string {
-    return `${this.namespace}:${serialize(key).toString("base64")}`;
+    return `${this.namespace}:${serialize(key).toString(`base64`)}`;
   }
 
   async get(key: K): Promise<V | void> {
