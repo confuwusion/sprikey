@@ -24,7 +24,7 @@ type DataPacket<V> = DataComponents.Value<V> & DataComponents.Expiry;
 
 type DataEntry<K, V> = DataComponents.Key<K> & DataPacket<V>
 
-class DatabaseHandler<K, V> {
+export class DatabaseHandler<K, V> {
 
   readonly busyTimeout: number = 0;
   readonly db: Promise<sql3DB>;
@@ -211,8 +211,8 @@ export class DatabaseCache<K, V> {
   }
 
 
-  async set(key: K, value: V, expiry: number): Promise<boolean> {
-    if (expiry < Date.now() && expiry !== 0) return false;
+  async set(key: K, value: V, expiry = this.driver.ttl): Promise<boolean> {
+    if (expiry < Date.now() && expiry) return false;
 
     this.cache.set(key, { value, expiry });
 
