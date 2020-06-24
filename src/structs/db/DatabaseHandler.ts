@@ -85,7 +85,7 @@ export class DatabaseHandler<K, V> {
     const [ row ] = await this.query(select);
     if (!row) return;
 
-    const { expiry, value } = DatabaseHandler.deserialize(row);
+    const { expiry, value } = DatabaseHandler.deserialize<K, V>(row);
 
     if (expiry < Date.now()) return;
 
