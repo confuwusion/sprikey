@@ -9,7 +9,7 @@
    "logging": false,
    "cache": true,
    "entities": [
-      "src/entity/**/*.ts"
+      "src/structs/entities/**/*.ts"
    ],
    "migrations": [
       "src/migration/**/*.ts"
@@ -18,7 +18,7 @@
       "src/subscriber/**/*.ts"
    ],
    "cli": {
-      "entitiesDir": "src/entity",
+      "entitiesDir": "src/structs/entities",
       "migrationsDir": "src/migration",
       "subscribersDir": "src/subscriber"
    }
