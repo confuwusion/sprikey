@@ -1,5 +1,6 @@
-data/
+.idea/
+.vscode/
 node_modules/
-.glitch-assets
-shrinkwrap.yaml
-.env
+build/
+tmp/
+temp/
