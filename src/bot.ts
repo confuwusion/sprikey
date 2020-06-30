@@ -1,4 +1,4 @@
-// Modules
+import "reflect-metadata";
 import * as CONSTANTS from "./constants";
 import * as Keyv from "keyv";
 import * as bufferJSON from "json-buffer";
