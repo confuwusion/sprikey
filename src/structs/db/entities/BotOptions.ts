@@ -10,14 +10,15 @@ import {BaseEntry} from "../BaseEntry";
 interface Options {
   lastActive: number,
   uptime: number,
-  pingRecord: { memberID: string, time: number }
+  pingRecord: { memberID: string, time: number },
+  restartMessage?: { channelID: string, messageID: string }
 }
 
 @Entity()
 export class BotOption extends BaseEntry<BotOption> {
 
-  @Column({ type: `simple-enum` })
-  option: keyof Options;
+  @Column()
+  readonly option: keyof Options;
 
   @Column({ type: `simple-json` })
   data: Options[this["option"]];
