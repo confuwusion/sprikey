@@ -4,16 +4,16 @@ import {BaseEntry} from "../BaseEntry";
 class TimerValue<T> extends BaseEntry<TimerValue<T>> {
 
   @Column()
-  name: string;
+  readonly name: string;
 
   @Column()
-  type: "fixed" | "repeating";
+  readonly type: "fixed" | "repeating";
 
   @Column()
-  time: number;
+  readonly time: number;
 
   @Column({ type: `simple-json` })
-  data: T
+  readonly data: T
 
 }
 
@@ -21,6 +21,6 @@ class TimerValue<T> extends BaseEntry<TimerValue<T>> {
 export class TimerEntry<T> extends TimerValue<T> {
 
   @PrimaryColumn()
-  code: string = process.hrtime.bigint().toString(36);
+  readonly code: string = process.hrtime.bigint().toString(36);
 
 }

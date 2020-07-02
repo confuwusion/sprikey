@@ -5,9 +5,9 @@ import {BaseEntry} from "../BaseEntry";
 export class LeaveRoles extends BaseEntry<LeaveRoles> {
 
   @PrimaryColumn()
-  memberID: string;
+  readonly memberID: string;
 
   @Column({ type: `simple-array` })
-  roleIDs: string[];
+  readonly roleIDs: string[];
 
 }

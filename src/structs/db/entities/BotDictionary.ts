@@ -4,10 +4,10 @@ import { Column, Entity, PrimaryColumn } from "typeorm";
 export class BotDictionary {
 
   @PrimaryColumn()
-  figure: string;
+  readonly figure: string;
 
   @Column()
-  list: {
+  readonly list: {
 
     // Categorization
     [index: string]: string[]

@@ -7,8 +7,8 @@ type Alphabets = `a` | `b` | `c` | `d` | `e` | `f` | `g` | `h` | `i` | `j` | `k`
 export class SimilarCharacter extends BaseEntry<SimilarCharacter> {
 
   @PrimaryColumn()
-  letter: Alphabets;
+  readonly letter: Alphabets;
 
   @Column({ type: `simple-array` })
-  characters: string[]
+  readonly characters: string[]
 }

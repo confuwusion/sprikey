@@ -5,9 +5,9 @@ import {BaseEntry} from "../BaseEntry";
 export class Lockout extends BaseEntry<Lockout> {
 
   @Column()
-  memberID: string;
+  readonly memberID: string;
 
   @Column({ type: `simple-array` })
-  channelIDs: string[];
+  readonly channelIDs: string[];
 
 }

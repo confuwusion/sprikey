@@ -14,19 +14,19 @@ type RegExpFlags = `i` | ``;
 class WatchData extends BaseEntry<WatchData> {
 
   @Column()
-  pattern: [ string, RegExpFlags ];
+  readonly pattern: [ string, RegExpFlags ];
 
   @Column()
-  criteria?: {
-    targets?: CriteriaInstances<string[]>,
-    include?: CriteriaInstances<boolean>
+  readonly criteria?: {
+    readonly targets?: CriteriaInstances<string[]>,
+    readonly include?: CriteriaInstances<boolean>
   }
 
   @Column()
-  options: {
-    actions?: ActionRegistry[],
-    clean?: boolean,
-    tags?: { [index: string]: string }
+  readonly options: {
+    readonly actions?: ActionRegistry[],
+    readonly clean?: boolean,
+    readonly tags?: { [index: string]: string }
   };
 
   constructor({
@@ -56,6 +56,6 @@ class WatchData extends BaseEntry<WatchData> {
 export class WatchEntry extends WatchData {
 
   @PrimaryColumn()
-  code: string = process.hrtime.bigint().toString(36);
+  readonly code: string = process.hrtime.bigint().toString(36);
 
 }

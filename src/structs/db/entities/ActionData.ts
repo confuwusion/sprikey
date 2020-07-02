@@ -4,10 +4,10 @@ import { BaseEntry } from "../BaseEntry";
 class ActionEntry<T> extends BaseEntry<ActionEntry<T>> {
 
   @Column()
-  name: string;
+  readonly name: string;
 
   @Column()
-  data: T;
+  readonly data: T;
 
 }
 
@@ -15,6 +15,6 @@ class ActionEntry<T> extends BaseEntry<ActionEntry<T>> {
 export class ActionData<T> extends ActionEntry<T> {
 
   @PrimaryColumn()
-  code: string = process.hrtime.bigint().toString(36);
+  readonly code: string = process.hrtime.bigint().toString(36);
 
 }
