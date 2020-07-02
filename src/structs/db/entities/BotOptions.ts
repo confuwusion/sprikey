@@ -9,7 +9,8 @@ import {BaseEntry} from "../BaseEntry";
 
 interface Options {
   lastActive: number,
-  uptime: number
+  uptime: number,
+  pingRecord: { memberID: string, time: number }
 }
 
 @Entity()
