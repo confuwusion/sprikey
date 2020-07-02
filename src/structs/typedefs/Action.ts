@@ -1,18 +1,33 @@
-function actionError(name, err) {
-  return new Error(`Action Error (${name}): ${err}!`);
+import { SprikeyClient } from "../SprikeyClient";
+
+type ActionName = { name: string };
+
+export type ActionValue<T> = ActionName & { data: T };
+
+export type ActionRegistry = ActionName & { code: number };
+
+interface ActionStructure<T> {
+  description: string,
+  usage: string[],
+  parse(client: SprikeyClient, args: string[]): T;
+  perform(client: SprikeyClient, args: ReturnType<this["parse"]>): void;
 }
 
-class Action {
-  constructor(name, {
+
+export class Action<T> implements ActionStructure<T> {
+
+  readonly name: string;
+  readonly description: ActionStructure<T>["description"];
+  readonly usage: ActionStructure<T>["usage"];
+  readonly perform: ActionStructure<T>["perform"];
+  readonly parse: ActionStructure<T>["parse"];
+
+  constructor(name: string, {
     description,
     usage,
     perform,
     parse
-  }) {
-    if (!description) return actionError(name, "description is not defined");
-    if (!perform) return actionError(name, "main method perform is not defined");
-    if (!parse) return actionError(name, "method parse is not defined");
-    
+  }: ActionStructure<T>) {
     this.name = name;
     this.description = description;
     this.usage = usage;
@@ -20,5 +35,3 @@ class Action {
     this.parse = parse;
   }
 }
-
-module.exports = { Action };
