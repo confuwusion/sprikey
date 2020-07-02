@@ -5,9 +5,9 @@ import {BaseEntry} from "./BaseEntry";
 export class LogChannel extends BaseEntry<LogChannel> {
 
   @PrimaryColumn()
-  type: string;
+  readonly type: string;
 
   @Column()
-  id: string;
+  readonly channelID: string;
 
 }
