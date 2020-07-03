@@ -1,9 +1,3 @@
-// Keys
-// time
-//
-// Values
-// Cache Instance mapped to <Key=(lastActive,uptime),Value={value specific to key)
-
 import {Column, Entity} from "typeorm";
 import {BaseEntry} from "../BaseEntry";
 
