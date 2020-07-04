@@ -1,0 +1,10 @@
+{
+  "name": "Sprikey",
+  "readme": "./README.md",
+  "listInvalidSymbolLinks": true,
+  "mode": "modules",
+  "out": "docs",
+  "inputFiles": [ "./src" ],
+  "theme": "default",
+  "tsconfig": "./tsconfig.json"
+}
