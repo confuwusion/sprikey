@@ -109,11 +109,14 @@
         }],
         "indent-legacy": "off",
         "init-declarations": "error",
-        "jsdoc/check-examples" : {
-          "paddedIndent": 2
-        },
+        "jsdoc/check-examples" : [
+          "error",
+          {
+            "paddedIndent": 2
+          }
+        ],
         "jsdoc/require-param-type": 0,
-        "jsdoc/require-return-type": 0,
+        "jsdoc/require-returns-type": 0,
         "jsx-quotes": "error",
         "key-spacing": "error",
         "keyword-spacing": "error",
