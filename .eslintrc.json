@@ -5,7 +5,8 @@
     },
     "extends": [
         "eslint:recommended",
-        "plugin:@typescript-eslint/eslint-recommended"
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:jsdoc/recommended"
     ],
     "globals": {
         "Atomics": "readonly",
@@ -17,8 +18,15 @@
         "sourceType": "module"
     },
     "plugins": [
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "eslint-plugin-tsdoc",
+        "jsdoc"
     ],
+    "settings": {
+      "jsdoc": {
+        "mode": "typescript"
+      }
+    },
     "rules": {
         "accessor-pairs": "error",
         "array-bracket-newline": "off",
@@ -102,6 +110,11 @@
         }],
         "indent-legacy": "off",
         "init-declarations": "error",
+        "jsdoc/check-examples" : {
+          "paddedIndent": 2
+        },
+        "jsdoc/require-param-type": 0,
+        "jsdoc/require-return-type": 0,
         "jsx-quotes": "error",
         "key-spacing": "error",
         "keyword-spacing": "error",
@@ -345,7 +358,7 @@
             "error",
             "never"
         ],
-        "valid-jsdoc": "error",
+        "valid-jsdoc": "off",
         "vars-on-top": "off",
         "wrap-regex": "error",
         "yield-star-spacing": "error",
