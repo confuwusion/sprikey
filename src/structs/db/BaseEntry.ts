@@ -1,8 +1,5 @@
-import {BaseEntity} from "typeorm";
-
-export class BaseEntry<T> extends BaseEntity {
+export class BaseEntry<T> {
   constructor(entries: T) {
-    super();
     Object.assign(this, entries);
   }
 }
