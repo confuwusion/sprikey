@@ -112,7 +112,8 @@
         "jsdoc/check-examples" : [
           "error",
           {
-            "paddedIndent": 2
+            "paddedIndent": 2,
+            "exampleCodeRegex": "/```typescript.+```/g"
           }
         ],
         "jsdoc/require-param-type": 0,
