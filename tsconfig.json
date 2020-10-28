@@ -1,19 +1,43 @@
 {
-   "compilerOptions": {
-      "lib": [
-         "es5",
-         "es6",
-         "ES2016",
-         "ES2017",
-         "ES2018",
-         "ES2019"
-      ],
-      "target": "ES2019",
-      "module": "commonjs",
-      "moduleResolution": "node",
-      "outDir": "./dist",
-      "emitDecoratorMetadata": true,
-      "experimentalDecorators": true,
-      "sourceMap": true
-   }
+  "compilerOptions": {
+    "baseUrl": "src",
+    "lib": [
+      "es5",
+      "es6",
+      "ES2016",
+      "ES2017",
+      "ES2018",
+      "ES2019"
+    ],
+    "target": "ES2019",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "paths": {
+      "@constants/*": [ "configs/constants/*" ],
+      "@entities/*": [ "db/entities/*" ],
+      "@db/*": [ "db/*" ],
+      "@structs/*": [ "structs/*" ],
+      "@typedefs/*": [ "structs/typedefs/*" ],
+      "@util/*": [ "util/*" ]
+    },
+    "plugins": [{
+      "transform": "@zerollup/ts-transform-paths",
+      "exclude": ["*"]
+    }],
+    "sourceMap": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": false
+  },
+  "include": [ "src/" ],
+  "exclude": [ "tests/" ]
 }
