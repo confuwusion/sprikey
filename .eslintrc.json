@@ -11,7 +11,7 @@
     "SharedArrayBuffer": "readonly"
   },
   "parserOptions": {
-    "ecmaVersion": 10,
+    "ecmaVersion": 2019,
     "sourceType": "module"
   },
   "plugins": [
@@ -21,6 +21,7 @@
     {
       "parser": "@typescript-eslint/parser",
       "parserOptions": {
+        "ecmaVersion": 2020,
         "project": "./tsconfig.json"
       },
       "plugins": [
@@ -111,10 +112,10 @@
                 "private-constructor",
                 "constructor",
 
-                "public-static-method",
-                "protected-static-method",
-                "private-static-method",
-                "static-method",
+                "public-method",
+                "protected-method",
+                "private-method",
+                "method",
 
                 "public-decorated-method",
                 "protected-decorated-method",
@@ -131,10 +132,10 @@
                 "private-abstract-method",
                 "abstract-method",
 
-                "public-method",
-                "protected-method",
-                "private-method",
-                "method"
+                "public-static-method",
+                "protected-static-method",
+                "private-static-method",
+                "static-method"
               ],
               "order": "as-written"
             }
@@ -197,16 +198,16 @@
         "@typescript-eslint/no-unsafe-return": "error",
         "@typescript-eslint/no-unused-expressions": "error",
         "@typescript-eslint/no-unused-vars": [ "error" ],
-        "@typescript-eslint/no-use-before-define": "error",
+        "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/no-useless-constructor": "error",
         "@typescript-eslint/prefer-as-const": "error",
         "@typescript-eslint/prefer-for-of": "error",
         "@typescript-eslint/prefer-function-type": "error",
         "@typescript-eslint/prefer-includes": "error",
-        "@typescript-eslint/prefer-literal-enum-member": "error",
+        "@typescript-eslint/prefer-literal-enum-member": "off",
         "@typescript-eslint/prefer-optional-chain": "error",
         "@typescript-eslint/prefer-readonly": "error",
-        "@typescript-eslint/prefer-readonly-parameter-types": "error",
+        "@typescript-eslint/prefer-readonly-parameter-types": "off",
         "@typescript-eslint/prefer-reduce-type-parameter": "error",
         "@typescript-eslint/prefer-regexp-exec": "error",
         "@typescript-eslint/prefer-string-starts-ends-with": "error",
@@ -326,7 +327,7 @@
     "id-blacklist": "error",
     "id-length": [
       "error",
-      { "min": 2, "max": 22, "exceptions": ["fs", "id", "i"] }
+      { "min": 2, "max": 22, "exceptions": ["fs", "id", "i", "_"] }
     ],
     "id-match": "error",
     "implicit-arrow-linebreak": "error",
@@ -582,7 +583,7 @@
     "prefer-spread": "error",
     "prefer-template": "error",
     "quote-props": ["error", "as-needed"],
-    "quotes": "error",
+    "quotes": [ "error", "backtick" ],
     "radix": "error",
     "require-atomic-updates": "off",
     "require-await": "error",
