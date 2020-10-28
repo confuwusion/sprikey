@@ -1,4 +1,10 @@
-export function displayTime(milliseconds: number): string {
+/**
+ * Formats time (in milliseconds) to be displayable
+ *
+ * @param milliseconds - The time (in milliseconds) to format
+ * @returns - The formatted time
+ */
+export function formatTime(milliseconds: number): string {
   const seconds = ~~(milliseconds / 1000);
   const minutes = ~~(seconds / 60);
   const hours = ~~(minutes / 60);
@@ -22,7 +28,13 @@ export function displayTime(milliseconds: number): string {
   ].filter(Boolean).join(`, `);
 }
 
-export function displayBigIntTime(nanoseconds: bigint): string {
+/**
+ * Formats time (in BigInt nanoseconds) to be displayable
+ *
+ * @param nanoseconds - The time in (BigInt nanoseconds) to format
+ * @returns - The formatted time
+ */
+export function formatBigIntTime(nanoseconds: bigint): string {
   const microseconds = nanoseconds / BigInt(1000);
   const milliseconds = microseconds / BigInt(1000);
 
@@ -31,7 +43,7 @@ export function displayBigIntTime(nanoseconds: bigint): string {
   const displayMilliseconds = milliseconds && milliseconds % BigInt(1000);
 
   return [
-    displayTime(Number(displayMilliseconds)),
+    formatTime(Number(displayMilliseconds)),
     displayMicroseconds && `${displayMicroseconds}μs`,
     displayNanoseconds && `${displayNanoseconds}ns`
   ].filter(Boolean).join(`, `);
