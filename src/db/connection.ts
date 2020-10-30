@@ -14,10 +14,10 @@ export async function initiateConnection(): Promise<InitiatedConnection> {
   const db = createDatabaseManagers(connections, repositories);
   const botOptions = new OptionsManager(connections, repositories.BotOptions);
 
-  await loadAllEntries(db);
+  const loadedEntries = await loadAllEntries(db);
   await botOptions.loadAllEntries();
 
-  return { botOptions, db, repositories };
+  return { botOptions, db, loadedEntries, repositories };
 }
 
 /**
@@ -67,9 +67,9 @@ function createDatabaseManagers(
       connections,
       repositories.ActionData
     ),
-    CommandHierarchies: new DatabaseManager(
+    PermissionData: new DatabaseManager(
       connections,
-      repositories.CommandHierarchies
+      repositories.PermissionData
     ),
     IFTTTWebhooks: new DatabaseManager(
       connections,
@@ -96,6 +96,7 @@ async function loadAllEntries(db: TableMetadata.Managers): Promise<TableMetadata
 export interface InitiatedConnection {
   botOptions: OptionsManager;
   db: TableMetadata.Managers;
+  loadedEntries: TableMetadata.LoadedEntries;
   repositories: TableMetadata.Repositories;
 }
 

@@ -1,9 +1,9 @@
 import { DatabaseManager } from "@db/lib/managers/Relational";
 import { ActionData } from "@entities/ActionData";
 import { BotOption } from "@entities/BotOptions";
-import { CommandHierarchy } from "@entities/CommandHierarchies";
 import { IFTTTWebhook } from "@entities/IFTTTWebhooks";
 import { LogChannel } from "@entities/LogChannels";
+import { PermissionData } from "@entities/PermissionData";
 import { join } from "path";
 import { Connection, ConnectionOptions, Repository } from "typeorm";
 
@@ -22,7 +22,7 @@ const dbPaths = {
 const entities = {
   ActionData,
   BotOptions: BotOption,
-  CommandHierarchies: CommandHierarchy,
+  PermissionData,
   IFTTTWebhooks: IFTTTWebhook,
   LogChannels: LogChannel
 } as const;
