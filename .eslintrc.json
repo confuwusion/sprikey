@@ -259,6 +259,7 @@
         "no-unused-vars": "off",
         "no-use-before-define": "off",
         "no-useless-constructor": "off",
+        "no-void": "off",
         "quotes": "off",
         "require-await": "off",
         "semi": "off",
@@ -327,12 +328,12 @@
     "id-blacklist": "error",
     "id-length": [
       "error",
-      { "min": 2, "max": 22, "exceptions": ["fs", "id", "i", "_"] }
+      { "min": 2, "max": 25, "exceptions": ["fs", "id", "i", "_"] }
     ],
     "id-match": "error",
     "implicit-arrow-linebreak": "error",
     "indent": [
-      "error",
+      "off",
       2,
       {
         "SwitchCase": 1,
