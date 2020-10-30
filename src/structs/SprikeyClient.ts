@@ -14,7 +14,12 @@ export class SprikeyClient extends Client {
 
   readonly cache = generateBotCache();
 
-  readonly categories: Collection<Categories, this["commands"]>;
+  readonly categories: Collection<Categories, this["commands"]> = new Collection(
+    Object.keys(Categories).map(category => [
+      Categories[category as CategoryKeys],
+      new Collection()
+    ])
+  );
 
   readonly commands: Collection<string, Command> = new Collection();
 
@@ -41,15 +46,6 @@ export class SprikeyClient extends Client {
       }
     });
 
-    type CategoryKeys = keyof typeof Categories;
-
-    this.categories = new Collection(
-      Object.keys(Categories).map(category => [
-        Categories[category as CategoryKeys],
-        new Collection()
-      ])
-    );
-
     this.botOptions = connection.botOptions;
     this.db = connection.db;
 
@@ -70,3 +66,5 @@ export class SprikeyClient extends Client {
 interface ManagerInstances {
   permissions: PermissionsManager;
 }
+
+type CategoryKeys = keyof typeof Categories;
