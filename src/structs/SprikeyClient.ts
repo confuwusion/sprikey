@@ -1,20 +1,31 @@
+import { GUILD } from "@constants/Guild";
+import { TableMetadata } from "@db/config";
+import { InitiatedConnection } from "@db/connection";
+import { generateBotCache } from "@db/lib/cache";
+import { OptionsManager } from "@db/lib/managers/Options";
 import { Client, Collection, Guild } from "discord.js";
-import { ActionsManager } from "./ActionsManager";
-import { TimeManager } from "./TimeManager.js";
+
+import { PermissionsManager } from "./managers/Permissions";
+import { Categories, Command } from "./typedefs/Command";
 
 export class SprikeyClient extends Client {
 
-  readonly client: Client;
+  readonly botOptions: OptionsManager;
 
-  readonly MAIN_GUILD: Guild | void;
-  readonly TEST_GUILD: Guild;
+  readonly cache = generateBotCache();
 
-  readonly categories: Collection;
-  readonly commands: Collection;
+  readonly categories: Collection<Categories, this["commands"]>;
 
-  eventState: boolean = false;
+  readonly commands: Collection<string, Command> = new Collection();
 
-  constructor(cache, MAIN_GUILD: Guild | void, TEST_GUILD: Guild) {
+  readonly db: TableMetadata.Managers;
+
+  readonly managers: ManagerInstances;
+
+  eventState = false;
+
+  constructor(readonly connection: InitiatedConnection) {
+
     super({
       partials: [
         `MESSAGE`,
@@ -30,21 +41,32 @@ export class SprikeyClient extends Client {
       }
     });
 
-    this.cache = cache;
-    this.client = this;
+    type CategoryKeys = keyof typeof Categories;
 
-    this.MAIN_GUILD = MAIN_GUILD;
-    this.TEST_GUILD = TEST_GUILD;
+    this.categories = new Collection(
+      Object.keys(Categories).map(category => [
+        Categories[category as CategoryKeys],
+        new Collection()
+      ])
+    );
 
-    this.categories = new Collection();
-    this.commands = new Collection();
+    this.botOptions = connection.botOptions;
+    this.db = connection.db;
 
     this.managers = {
-      actions: new ActionsManager(this),
-      censor: cache.wordCensor,
-      permissions: cache.memberPermissions,
-      time: new TimeManager(this, {}),
-      watcher: cache.wordPatterns
+      permissions: new PermissionsManager(this)
     };
   }
+
+  get MAIN_GUILD(): Guild {
+    return this.guilds.cache.get(GUILD.MAIN)!;
+  }
+
+  get TEST_GUILD(): Guild {
+    return this.guilds.cache.get(GUILD.TEST)!;
+  }
+}
+
+interface ManagerInstances {
+  permissions: PermissionsManager;
 }

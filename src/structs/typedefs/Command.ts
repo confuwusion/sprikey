@@ -1,19 +1,15 @@
-import * as CONSTANTS from "../../constants";
-import * as Str from "string";
-import { MessageEmbed } from "discord.js";
+import { CHANNELS } from "@constants/Channels";
+import { PERMISSIONS } from "@constants/Permissions";
+import { PermissionsManager } from "@structs/managers/Permissions";
+import { SprikeyClient } from "@structs/SprikeyClient";
+import { Message, MessageEmbed } from "discord.js";
+import { titleCase } from "string-fn";
+import { Optional } from "utility-types";
 
-const {
-  DENY,
-  commandChannels,
-  PERMISSIONS: {
-    HIERARCHIES: { MASTER, MOD, EVERYONE },
-    TRENDS: { CURRENT_ABOVE }
-  }
-} = CONSTANTS;
+const INPUT_PLACEHOLDER = `{input}`;
+const INPUT_PATTERN = new RegExp(INPUT_PLACEHOLDER.replace(/(\{|\})/g, (_, brace: string) => `\\${brace}`), `gi`);
 
-const INPUT_CAPTURE = /\{\[inp\]\}/g;
-
-enum Categories {
+export enum Categories {
   General,
   Fun,
   Utility,
@@ -22,185 +18,363 @@ enum Categories {
   Watcher
 }
 
-const categoryHierarchies: { [key in Categories]: number } = {
-  [Categories.General]: EVERYONE,
-  [Categories.Fun]: EVERYONE,
-  [Categories.Utility]: EVERYONE,
-  [Categories.Moderation]: MOD,
-  [Categories.Master]: MASTER,
-  [Categories.Watcher]: MOD
+type CategoryHierarchies = {
+  [key in Categories]: PERMISSIONS.HIERARCHIES;
 };
 
-function commandError(name: string, err: string) {
-  return new Error(`Command Error (${name}): ${err}!`);
-}
+const categoryHierarchies: CategoryHierarchies = {
+  [Categories.General]: PERMISSIONS.HIERARCHIES.EVERYONE,
+  [Categories.Fun]: PERMISSIONS.HIERARCHIES.EVERYONE,
+  [Categories.Utility]: PERMISSIONS.HIERARCHIES.EVERYONE,
+  [Categories.Moderation]: PERMISSIONS.HIERARCHIES.MOD,
+  [Categories.Master]: PERMISSIONS.HIERARCHIES.MASTER,
+  [Categories.Watcher]: PERMISSIONS.HIERARCHIES.MOD
+};
 
-export interface CommandStructure {
-  name: string,
-  description: string
-  category: Categories,
-  icon: { emoji: string, url: string },
-  args: {
-    blank: string,
-    details: string,
-    fillers: string[],
-    usage: any[],
-    detectors: RegExp[]
-  },
-  permission: {
-    exclusive: boolean,
-    channels: string[],
-    hierarchy: number,
-    trend: number
+// eslint-disable-next-line jsdoc/require-returns-check
+// eslint-disable-next-line jsdoc/require-jsdoc
+function checkFaultyArgs(name: string, { blank, usages, detectors }: CommandArguments): never | void {
+  if (!(blank.length || usages.length)) {
+    throw new Error(`COMMAND ERROR: (${name}): Command Usage details are not defined!`);
   }
-  parse(pack: any, pieces: string[]): object;
-  run(pack: any, parsedArgs: object): Promise<Promise<any>[]>;
+  if (!usages.length !== !detectors.length) {
+    throw new Error(`COMMAND ERROR: (${name}): Parameters do not correspond with Command Usage!`);
+  }
 }
 
-export class Command implements CommandStructure {
+interface CommandIconEntry {
 
-  readonly name: CommandStructure["name"];
-  readonly description: CommandStructure["description"];
-  readonly category: CommandStructure["category"];
-  readonly icon: CommandStructure["icon"];
-  readonly args: CommandStructure["args"];
-  readonly permission: CommandStructure["permission"];
+  /**
+   * The unicode emoji that represents the icon
+   **/
+  readonly emoji: string;
 
-  readonly run: CommandStructure["run"];
-  readonly parse: CommandStructure["parse"] = function(_p, _i): string[] {
-    return _i;
-  };
+  /**
+   * The twemoji URL that represents the icon
+   **/
+  readonly url: string;
+}
+
+export class CommandIcon implements CommandIconEntry {
+
+  readonly emoji: CommandIconEntry["emoji"];
+
+  readonly url: CommandIconEntry["url"];
+
+  constructor(emoji: CommandIcon["emoji"], url: CommandIcon["url"]) {
+    this.emoji = emoji;
+    this.url = url;
+  }
+
+}
+
+interface CommandArgumentsEntry {
+
+  /**
+   * Describes what the command does if no arguments were provided by the member
+   **/
+  readonly blank: string;
+
+  /**
+   * a
+   **/
+  readonly details: string;
+
+  /**
+   * List of regex that represent and break down each parameter.
+   * Each array entry represents an individual parameter (in order).
+   **/
+  readonly detectors: RegExp[];
+
+  /**
+   * Hardcoding parameters that can dynamically accept user input.
+   * Each array entry represents an individual parameter (in order).
+   * Place {[inp]} anywhere inside individual parameter strings to accept user input in that place, for that parameter.
+   **/
+  readonly fillers: string[];
+
+  /**
+   * List of various usage instructions
+   **/
+  readonly usages: CommandUsage[];
+}
+
+class CommandArguments implements CommandArgumentsEntry {
+
+  readonly blank: string;
+
+  readonly details: string;
+
+  readonly detectors: RegExp[];
+
+  readonly fillers: string[];
+
+  readonly usages: CommandUsage[];
 
   constructor({
-    name, description, category, run, parse, icon,
-    args: {
-      blank = ``,
-      details = ``,
-      fillers = [],
-      usage = [],
-      detectors = []
-    },
-    permission: {
+    usages,
+    blank = ``,
+    details = ``,
+    detectors = [],
+    fillers = []
+  }: CommandArguments) {
+    this.blank = blank;
+    this.details = details;
+    this.detectors = detectors;
+    this.fillers = fillers;
+    this.usages = usages.map(usage => new CommandUsage(usage));
+  }
+
+}
+
+class CommandUsageEntry {
+  /**
+   * A title that describes the usage
+   *
+   * @example
+   *   ```typescript
+   *     title: "Set a reminder"
+   *   ```
+   **/
+  readonly title: string;
+
+  /**
+   * The parameter structure of this usage
+   *
+   * @example
+   * ```typescript
+   *   parameters: [
+   *     // Required fixed parameter
+   *     // Fixed parameters (usually near the beginning) represent a distinct usage
+   *     // They separate major features of the command
+   *     `set`,
+   *     `[Time]`,
+   *      // Optional dynamic parameter.
+   *      // The {@link:Command.parse} method should set a default if necessary
+   *      // The command shouldn't give an error if argument to this parameter isn't provided
+   *     `[Channel?]`
+   *     `[Description?]`
+   *   ]
+   * ```
+   **/
+  readonly parameters: string[];
+}
+
+class CommandUsage implements CommandUsageEntry {
+
+  readonly title: string;
+
+  readonly parameters: string[];
+
+  constructor({ title, parameters }: CommandUsage) {
+    this.title = title;
+    this.parameters = parameters;
+  }
+}
+
+interface CommandPermissionsEntry {
+
+  /**
+   * Restrict the usage of this command to the selected channels
+   * Defaults to false
+   **/
+  readonly exclusive: boolean;
+
+  /**
+   * IF exclusive is false:
+   *   Channels any general user can use the command in
+   * IF exclusive is true:
+   *   Channels the command is meant to be used in
+   **/
+  readonly channels: string[];
+
+  /**
+   * The hierarchy required for usage of this command
+   * Defaults to the hierarchy provided by the category
+   **/
+  readonly hierarchy: PERMISSIONS.HIERARCHIES;
+
+  /**
+   * Selection of hierarchies from the selected hierarchy
+   * Defaults to PERMISSIONS.TRENDS.CURRENT_ABOVE
+   **/
+  readonly trend: PERMISSIONS.TRENDS;
+}
+
+export class CommandPermissions implements CommandPermissionsEntry {
+
+  readonly channels: CommandPermissionsEntry["channels"];
+
+  readonly exclusive: CommandPermissionsEntry["exclusive"];
+
+  readonly hierarchy: CommandPermissionsEntry["hierarchy"];
+
+  readonly trend: CommandPermissionsEntry["trend"];
+
+  constructor(
+    {
+      channels = CHANNELS.COMMAND,
       exclusive = false,
-      channels = commandChannels,
-      hierarchy = categoryHierarchies[category],
-      trend = CURRENT_ABOVE
-    }
-  }: CommandStructure) {
+      hierarchy,
+      trend = PERMISSIONS.TRENDS.CURRENT_ABOVE
+    }: Optional<CommandPermissionsEntry, "hierarchy">,
+    category?: Categories
+  ) {
+    this.exclusive = exclusive;
+    this.channels = channels;
+    this.hierarchy = hierarchy ?? (category ? categoryHierarchies[category] : PERMISSIONS.HIERARCHIES.EVERYONE);
+    this.trend = trend;
+  }
+}
 
-    if (!(blank.length || usage.length)) {
-      throw commandError(name, `Command Usage details are not defined`);
-    }
-    if (!usage.length !== !detectors.length) {
-      throw commandError(name, `Parameters do not correspond with Command Usage`);
-    }
+interface CommandInterface {
 
-    this.name = name;
+  /**
+   * Describes what the command does
+   **/
+  readonly description: string;
+
+  /**
+   * Category the command belongs to
+   **/
+  readonly category: Categories;
+
+  /**
+   * The icon that graphically identifies the command
+   **/
+  readonly icon: CommandIconEntry;
+
+  /**
+   * Parameter definitions of the command
+   * Provide at least either {@link CommandArguments.blank} or {@link CommandArguments.detectors} with {@link CommandArguments.usage}
+   **/
+  readonly args: CommandArgumentsEntry;
+
+  /**
+   * Command usability by members in channels
+   **/
+  readonly permissions: CommandPermissionsEntry;
+
+  /**
+   * Conversion and validation of member arguments
+   **/
+  readonly parse: (client: SprikeyClient, pieces: string[]) => object;
+
+  /**
+   * Performing the main functionality of the command
+   * Note: It doesn't have to be in a single function. You can link multiple functions by calling them in this function
+   **/
+  readonly run: (
+    client: SprikeyClient,
+    parsedArgs: ReturnType<Command["parse"]>
+  ) => Promise<Promise<unknown>[]>;
+}
+
+/*
+ * A member-executable instructions for the bot
+ **/
+export class Command implements CommandInterface {
+
+  readonly description: CommandInterface["description"];
+
+  readonly category: CommandInterface["category"];
+
+  readonly icon: CommandInterface["icon"];
+
+  readonly args: CommandInterface["args"];
+
+  readonly permissions: CommandInterface["permissions"];
+
+  readonly parse: CommandInterface["parse"];
+
+  readonly run: CommandInterface["run"];
+
+  constructor(
+    readonly name: string,
+    { description, category, run, parse, icon, args, permissions }: CommandInterface,
+    readonly inherits?: Command
+  ) {
+
+    checkFaultyArgs(name, args);
+
     this.description = description;
     this.category = category;
     this.icon = icon;
-    this.args = { blank, details, detectors, fillers, usage };
-    this.permission = { exclusive, channels, hierarchy, trend };
+    this.args = args;
+    this.permissions = permissions;
     this.run = run;
     this.parse = parse;
   }
 
-  hasPermission({ cache, channel, author }) {
-    const { memberPermissions } = cache;
+  async hasPermission(client: SprikeyClient, { author, channel }: Message): Promise<boolean> {
+    const memberPermissions = client.managers.permissions;
+    const memberHierarchy = await memberPermissions.forCommand(this.name, author.id);
+    const { exclusive, channels, hierarchy, trend } = this.permissions;
 
-    const { exclusive, channels, hierarchy, trend } = this.permission;
+    const checkLog = client.cache.logs.permissionChecks.add({
+      command: { name: this.name, hierarchy, trend },
+      member: { username: author.username, hierarchy: memberHierarchy },
+      allowedInChannel: channels.includes(channel.id),
+      exclusiveToChannel: exclusive
+    });
 
-    const memberHierarchy = memberPermissions.forCommand(this.name, author.id);
-    console.log(`▫️Command:`, this.name);
-    console.log(`Member:`, author.username);
-    console.log(`Member Hierarchy:`, memberHierarchy);
-    console.log(`Belongs to channel:`, channels.includes(channel.id));
-    console.log(`Exclusive to channel:`, exclusive);
-
-    // Command's usability in message channel
     if (!channels.includes(channel.id)) {
-      const isStaff = memberPermissions.compare(MOD, CURRENT_ABOVE, memberHierarchy);
-      console.log(`Is staff:`, isStaff);
+      const isStaff = PermissionsManager.compare(
+        PERMISSIONS.HIERARCHIES.MOD,
+        PERMISSIONS.TRENDS.CURRENT_ABOVE,
+        memberHierarchy
+      );
+      checkLog.member.isStaff = isStaff;
 
       // Do not allow if command is not exclusive to channels or if member is not staff
-      if ((exclusive || !isStaff) && channel.guild) return DENY;
+      if ((exclusive || !isStaff) && channel.type !== `dm`) return false;
     }
 
-    // Member Command usability
-    const commandUsable = memberPermissions.compare(hierarchy, trend, memberHierarchy);
-    console.log(`Command Hierarchy and Trend:`, hierarchy, trend);
-    console.log(`Command is usable:`, commandUsable);
-    return commandUsable;
+    return PermissionsManager.compare(hierarchy, trend, memberHierarchy);
   }
 
   createSub(
-    name: CommandStructure["name"],
-    permissions: CommandStructure["permission"],
-    fillers: CommandStructure["args"]["fillers"]
-  ) {
-    return new Subcommand(name, this, permissions, fillers);
+    name: Command["name"],
+    subPermissions: Command["permissions"],
+    fillers: Command["args"]["fillers"]
+  ): Command {
+    const { args, permissions, ...otherDetails } = this;
+
+    const subbedCommand = new Command(name, {
+      ...otherDetails,
+      args: { ...args, fillers },
+      permissions: { ...permissions, ...subPermissions }
+    }, this);
+
+    return subbedCommand;
   }
 
-  embedTemplate() {
+  embedTemplate(): MessageEmbed {
     return new MessageEmbed()
-      .setAuthor(Str(this.name).capitalize().s, this.icon.url);
+      .setAuthor(titleCase(this.name), this.icon.url);
   }
 
-  extractArgs(content: string) {
+  extractArgs(content: string): readonly (string | readonly string[])[] {
     const {
       args: { detectors, fillers = [] }
     } = this;
 
-    if (!detectors.length) return detectors;
+    if (!detectors.length) return [];
 
     let remaining = content;
 
     return detectors.map((detector, i) => {
-      // Filler is a potentially pre-prepared
-      // argument string for a command parameter
-      // that might accept user input at
-      // specified parts - wherever {[inp]} is
-      // found
-
-      // If filler doesn't contain user input tag,
-      // it means it is not accepting user input
-      // for that parameter
-
-      // There can only be one set of input
-      // per filler
-      const filler = fillers[i] || `{[inp]}`;
-
-      // Global regex is first given the non-global
-      // behaviour (to extract text linearly) and
-      // then use the global regex on the
-      // non-globally extracted text
-
-      // This logic is used to:
-      // - Prevent global regex from extracting
-      //   text from elsewhere
-      // - Identify the true capture length so that
-      //   the captured part can be cut out properly
-
-      // Making global regex linear
+      const filler = fillers[i] || INPUT_PLACEHOLDER;
       const captureRegex = detector.global
         ? new RegExp(`^((?:(?:${detector.source})\\s*)+)`)
         : detector;
 
+      const userCapture = (captureRegex.exec(remaining) || ``)[0].replace(/\$&/g, `\\$\\&`);
+      const completeArg = filler.replace(INPUT_PATTERN, userCapture).trim();
+      const wholeCapture = detector.exec(completeArg) || ``;
 
-      // Capture user input and place it on every
-      // user input tag to complete the argument
-      const userCapture = (remaining.match(captureRegex) || [ `` ])[0].replace(/\$&/g, `\\$\\&`);
-      const completeArg = filler.replace(INPUT_CAPTURE, userCapture).trim();
-
-      // Use the original regex on the completed
-      // argument to produce expected behaviour,
-      // thus expected output
-      const wholeCapture = completeArg.match(detector) || [ `` ];
-
-      // Take out the captured part from user input
-      // If nothing was captured, then this will
-      // slice to return the same string
       remaining = remaining.slice(userCapture.length).trim();
+
       return wholeCapture && !detector.global
         ? wholeCapture[0]
         : wholeCapture;
@@ -208,30 +382,17 @@ export class Command implements CommandStructure {
   }
 }
 
-export class Subcommand extends Command {
-
-  readonly inherits: Command;
-
-  constructor(
-    name: CommandStructure["name"],
-    inherits: Command,
-    { hierarchy, trend, exclusive, channels }: CommandStructure["permission"],
-    fillers: CommandStructure["args"]["fillers"]
-  ) {
-    super({
-      ...inherits,
-      name,
-      permission: {
-        ...inherits.permission,
-        hierarchy, trend, exclusive,
-        channels: channels.length ? channels : inherits.permission.channels
-      },
-      args: {
-        ...inherits.args,
-        fillers
-      }
-    });
-
-    this.inherits = inherits;
-  }
+export interface PermissionCheck {
+  command: {
+    name: string;
+    hierarchy: number;
+    trend: number;
+  };
+  member: {
+    username: string;
+    hierarchy: number;
+    isStaff?: boolean;
+  };
+  allowedInChannel: boolean;
+  exclusiveToChannel: boolean;
 }
