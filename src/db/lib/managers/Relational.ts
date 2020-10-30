@@ -1,4 +1,4 @@
-import { DeepPartial, DeleteResult, Repository, UpdateResult } from "typeorm";
+import { DeleteResult, Repository, UpdateResult } from "typeorm";
 
 import { BaseDBManager } from "./Base";
 
@@ -166,8 +166,8 @@ namespace RepositoryParameters {
 namespace ManagerResults {
 
   export interface Save<DataEntity> {
-    cacheResult: DeepPartial<DataEntity>[];
-    mainResult: DeepPartial<DataEntity>[];
+    cacheResult: DataEntity[];
+    mainResult: DataEntity[];
   }
 
   export interface Delete {
