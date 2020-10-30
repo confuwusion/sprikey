@@ -3,7 +3,7 @@ import { Collection } from "discord.js";
 import { Column, Entity } from "typeorm";
 
 @Entity()
-class CommandHierarchyEntity {
+class PermissionDataEntity {
 
   @Column()
   readonly memberID: string;
@@ -13,13 +13,13 @@ class CommandHierarchyEntity {
 
 }
 
-export class CommandHierarchy extends CommandHierarchyEntity {
+export class PermissionData extends PermissionDataEntity {
 
-  static readonly Entity = CommandHierarchyEntity;
+  static readonly Entity = PermissionDataEntity;
 
   constructor(
-    readonly memberID: CommandHierarchyEntity["memberID"],
-    readonly commandHierarchies: CommandHierarchyEntity["commandHierarchies"]
+    readonly memberID: PermissionDataEntity["memberID"],
+    readonly commandHierarchies: PermissionDataEntity["commandHierarchies"]
   ) {
     super();
   }
