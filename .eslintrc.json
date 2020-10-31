@@ -244,6 +244,7 @@
           }
         ],
         "jsdoc/require-param-type": 0,
+        "jsdoc/require-jsdoc": "off",
         "jsdoc/require-returns-type": 0,
         "key-spacing": "off",
         "lines-between-class-members": "off",
@@ -347,6 +348,7 @@
     ],
     "indent-legacy": "off",
     "init-declarations": "error",
+    "jsdoc/require-jsdoc": "off",
     "jsx-quotes": "error",
     "key-spacing": "error",
     "keyword-spacing": "error",
