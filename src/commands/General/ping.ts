@@ -1,64 +1,80 @@
-module.exports = {
-  description: "View the bot's ping!",
-  icon: {
-    emoji: "🏓",
-    url: "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/twitter/236/table-tennis-paddle-and-ball_1f3d3.png"
-  },
-  args: {
-    blank: "to view the boy's ping"
-  },
-  run,
-  parse
-};
+import { ICONS } from "@constants/Icons";
+import { SprikeyClient } from "@structs/SprikeyClient";
+import { Categories, Command, CommandArguments } from "@structs/typedefs/Command";
+import { Message } from "discord.js";
 
-function parse() {return {}}
+export default class PingCommand extends Command<PingArgs> {
 
-function toUnit(time) {
-  const s = Math.floor(time % 60000 / 1000);
-  const ms = Math.floor(time % 60000 % 1000);
-  const sDisplay = s > 0 ? `${s}s, ` : ""
-  const msDisplay = ms > 0 ? `${ms}ms` : "";
-  
-  return (sDisplay + msDisplay);
+  constructor() {
+    super(`ping`, {
+      description: `View the bot's ping! (or play the fun minigame)`,
+      category: Categories.General,
+      icon: ICONS.PING,
+      args: new CommandArguments({
+        blank: `to view the bot's ping`
+      })
+    });
+  }
+
+  async run(client: SprikeyClient, { channel }: Message, { content }: PingArgs): Promise<void> {
+
+    const pingRecord = await client.botOptions.get(`pingRecord`);
+
+    if ((/record/i).test(content)) {
+      const recordHolder = client.users.cache.get(pingRecord.memberID)?.username ?? pingRecord.memberID;
+      return void channel.send(`${recordHolder} holds the record for the fastest reaction time of ${toUnit(pingRecord.time)}!`);
+    }
+
+    const pingMsg = await channel.send(this.embeds.default(`Ping?`));
+
+    await channel.awaitMessages((awaitedMessage: Message) => !awaitedMessage.author.bot, {
+      max: 1,
+      time: 10000,
+      errors: [ `time` ]
+    })
+      .then(async collected => {
+        if (pingMsg.deleted) return;
+
+        const intermediateMessage = collected.first() as Message;
+        const timeTaken = intermediateMessage.createdTimestamp - pingMsg.createdTimestamp;
+
+        const isWinner = (pingRecord.time || Infinity) > timeTaken;
+        void pingMsg.edit(``, { embed: this.embeds.default(`Pong! \`${Math.round(client.ws.ping)} ms\``)
+          .setFooter(
+            `${isWinner ? `👑 ` : ``}${intermediateMessage.author.tag} in ${toUnit(timeTaken)}!`,
+            intermediateMessage.author.displayAvatarURL({ format: `png`, dynamic: true })
+          )
+        });
+
+        if (isWinner) await client.botOptions.update(`pingRecord`, {
+          time: timeTaken,
+          memberID: intermediateMessage.author.id
+        });
+
+      })
+      .catch(() => pingMsg.deleted
+        ? pingMsg.edit(``, {
+            embed: {
+              title: `Ping`,
+              description: `Pong! \`\`${Math.round(client.ws.ping)} ms\`\``,
+              color: 5865983
+            }
+          })
+        : pingMsg
+      );
+  }
+
 }
 
-async function run({ client, cache, channel, messageDefault, pack }, content) {
-    
-  const pingRecord = cache.pingRecord;
-  
-  if (/record/i.test(content)) return channel.send(`${client.users.get(pingRecord.user).username} holds the record for the fastest reaction time of ${toUnit(pingRecord.reactionTime)}!`);
-  
-  const pingMsg = await channel.send(messageDefault('Ping?'));
-  pack.default = null;
-  
-  channel.awaitMessages(m => !m.author.bot, {
-    max: 1,
-    time: 10000,
-    errors: ['time']
-  }).then(collected => {
-    if (pingMsg.deleted) return;
-    
-    const immediateMsg = collected.first();
-    const timeTaken = immediateMsg.createdTimestamp - pingMsg.createdTimestamp;
-    
-    // Update ping data
-    pingMsg.edit("", {embed: messageDefault(`Pong! \`${Math.round(client.ws.ping)} ms\``)
-      .setFooter(`${(pingRecord.reactionTime || Infinity) > timeTaken ? '👑 ' : ''}${immediateMsg.author.tag} in ${toUnit(timeTaken)}!`, immediateMsg.author.displayAvatarURL({ format: "png", dynamic: true }))
-    });
-    pack.default = null;
-    
-    if ((pingRecord.reactionTime || Infinity) > timeTaken) cache.pingRecord = {
-      reactionTime: timeTaken,
-      user: immediateMsg.author.id
-    };
-    
-    return cache.save("pingRecord");
-    
-  }).catch(collected => {
-    pingMsg.deleted && pingMsg.edit("", {embed: {
-      title: 'Ping',
-      description: `Pong! \`\`${Math.round(client.ws.ping)} ms\`\``,
-      color: 5865983
-    }});
-  });
+function toUnit(time: number): string {
+  const sec = Math.floor(time % 60000 / 1000);
+  const ms = Math.floor(time % 60000 % 1000);
+  const sDisplay = sec > 0 ? `${sec}s, ` : ``;
+  const msDisplay = ms > 0 ? `${ms}ms` : ``;
+
+  return sDisplay + msDisplay;
+}
+
+interface PingArgs {
+  content: string;
 }
