@@ -96,10 +96,10 @@ interface CommandArgumentsEntry {
   /**
    * List of various usage instructions
    **/
-  readonly usages: CommandUsage[];
+  readonly usages: CommandUsageEntry[];
 }
 
-class CommandArguments implements CommandArgumentsEntry {
+export class CommandArguments implements CommandArgumentsEntry {
 
   readonly blank: string;
 
@@ -109,15 +109,15 @@ class CommandArguments implements CommandArgumentsEntry {
 
   readonly fillers: string[];
 
-  readonly usages: CommandUsage[];
+  readonly usages: CommandUsageEntry[];
 
   constructor({
-    usages,
+    usages = [],
     blank = ``,
     details = ``,
     detectors = [],
     fillers = []
-  }: CommandArguments) {
+  }: Partial<CommandArguments>) {
     this.blank = blank;
     this.details = details;
     this.detectors = detectors;
@@ -166,7 +166,7 @@ class CommandUsage implements CommandUsageEntry {
 
   readonly parameters: string[];
 
-  constructor({ title, parameters }: CommandUsage) {
+  constructor({ title, parameters }: CommandUsageEntry) {
     this.title = title;
     this.parameters = parameters;
   }
@@ -217,7 +217,7 @@ export class CommandPermissions implements CommandPermissionsEntry {
       exclusive = false,
       hierarchy,
       trend = PERMISSIONS.TRENDS.CURRENT_ABOVE
-    }: Optional<CommandPermissionsEntry, "hierarchy">,
+    }: Partial<CommandPermissionsEntry> = {},
     category?: Categories
   ) {
     this.exclusive = exclusive;
@@ -255,25 +255,12 @@ interface CommandInterface {
    **/
   readonly permissions: CommandPermissionsEntry;
 
-  /**
-   * Conversion and validation of member arguments
-   **/
-  readonly parse: (client: SprikeyClient, pieces: string[]) => object;
-
-  /**
-   * Performing the main functionality of the command
-   * Note: It doesn't have to be in a single function. You can link multiple functions by calling them in this function
-   **/
-  readonly run: (
-    client: SprikeyClient,
-    parsedArgs: ReturnType<Command["parse"]>
-  ) => Promise<Promise<unknown>[]>;
 }
 
 /*
  * A member-executable instructions for the bot
  **/
-export class Command implements CommandInterface {
+export class Command<CommandArgs extends object> implements CommandInterface {
 
   readonly description: CommandInterface["description"];
 
@@ -285,14 +272,14 @@ export class Command implements CommandInterface {
 
   readonly permissions: CommandInterface["permissions"];
 
-  readonly parse: CommandInterface["parse"];
+  // readonly parse: CommandInterface["parse"];
 
-  readonly run: CommandInterface["run"];
+  // readonly run: CommandInterface["run"];
 
   constructor(
     readonly name: string,
-    { description, category, run, parse, icon, args, permissions }: CommandInterface,
-    readonly inherits?: Command
+    { description, category, icon, args, permissions }: Optional<CommandInterface, "permissions">,
+    readonly inherits?: Command<CommandArgs>
   ) {
 
     checkFaultyArgs(name, args);
@@ -301,13 +288,11 @@ export class Command implements CommandInterface {
     this.category = category;
     this.icon = icon;
     this.args = args;
-    this.permissions = permissions;
-    this.run = run;
-    this.parse = parse;
+    this.permissions = permissions || new CommandPermissions();
   }
 
   async hasPermission(client: SprikeyClient, { author, channel }: Message): Promise<boolean> {
-    const memberPermissions = client.managers.permissions;
+    const memberPermissions = client.managers.permission;
     const memberHierarchy = await memberPermissions.forCommand(this.name, author.id);
     const { exclusive, channels, hierarchy, trend } = this.permissions;
 
@@ -334,13 +319,13 @@ export class Command implements CommandInterface {
   }
 
   createSub(
-    name: Command["name"],
-    subPermissions: Command["permissions"],
-    fillers: Command["args"]["fillers"]
-  ): Command {
+    name: Command<CommandArgs>["name"],
+    subPermissions: Command<CommandArgs>["permissions"],
+    fillers: Command<CommandArgs>["args"]["fillers"]
+  ): Command<CommandArgs> {
     const { args, permissions, ...otherDetails } = this;
 
-    const subbedCommand = new Command(name, {
+    const subbedCommand = new Command<CommandArgs>(name, {
       ...otherDetails,
       args: { ...args, fillers },
       permissions: { ...permissions, ...subPermissions }
@@ -380,6 +365,44 @@ export class Command implements CommandInterface {
         : wholeCapture;
     });
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, class-methods-use-this
+  parse(_client: SprikeyClient, _message: Message, arg: readonly (string | readonly string[])[]): CommandArgs {
+    // @ts-ignore
+    return { content: arg };
+  }
+
+  // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
+  async run(_client: SprikeyClient, _message: Message, _arg: CommandArgs): Promise<void> {}
+
+  get embeds(): CommandEmbeds {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const command = this;
+
+    return {
+      default(message: string): MessageEmbed {
+        return command.embedTemplate()
+          .setDescription(message)
+          .setColor(4691422);
+      },
+      error(errorMessage): MessageEmbed {
+        return command.embedTemplate()
+          .setDescription(`<:error:709510101760868435> ${errorMessage}`)
+          .setColor(12864847);
+      },
+      warn(warnMessage): MessageEmbed {
+        return command.embedTemplate()
+          .setDescription(warnMessage)
+          .setColor(16763981);
+      },
+      success(successMessage): MessageEmbed {
+        return command.embedTemplate()
+          .setDescription(`<:success:709510035960496149> ${successMessage}`)
+          .setColor(4241788);
+      }
+    };
+  }
+
 }
 
 export interface PermissionCheck {
@@ -396,3 +419,7 @@ export interface PermissionCheck {
   allowedInChannel: boolean;
   exclusiveToChannel: boolean;
 }
+
+type CommandEmbeds = {
+  readonly [K in "default" | "error" | "warn" | "success"]: (message: string) => MessageEmbed;
+};
