@@ -1,7 +1,10 @@
 import { getTimeAsCode } from "@util/getTimeAsCode";
 import { Column, Entity, PrimaryColumn } from "typeorm";
 
-class ReactionRoleValue {
+class ReactionRoleEntity {
+
+  @PrimaryColumn()
+  readonly code: string = getTimeAsCode();
 
   @Column()
   readonly messageID: string;
@@ -15,9 +18,7 @@ class ReactionRoleValue {
 }
 
 @Entity()
-export class ReactionRole extends ReactionRoleValue {
+export class ReactionRole extends ReactionRoleEntity {
 
-  @PrimaryColumn()
-  readonly code: string = getTimeAsCode();
 
 }

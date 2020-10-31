@@ -27,7 +27,7 @@ class SubcommandDataEntity {
 
 }
 
-export class SubcommandData extends SubcommandDataEntity {
+export class SubcommandData<SubcommandArgs extends object> extends SubcommandDataEntity {
 
   static Entity = SubcommandDataEntity;
 
@@ -46,13 +46,13 @@ export class SubcommandData extends SubcommandDataEntity {
   readonly fillers: SubcommandDataEntity["fillers"];
 
   constructor(
-    inheritor: Command,
+    inheritor: Command<SubcommandArgs>,
     {
       name,
       exclusive,
-      hierarchy = inheritor.permission.hierarchy,
-      trend = inheritor.permission.trend,
-      channelIDs = inheritor.permission.channels,
+      hierarchy = inheritor.permissions.hierarchy,
+      trend = inheritor.permissions.trend,
+      channelIDs = inheritor.permissions.channels,
       fillers = inheritor.args.fillers
     }: SubcommandDataEntity
   ) {

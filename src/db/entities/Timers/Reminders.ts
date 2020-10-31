@@ -1,3 +1,4 @@
+import { getTimeAsCode } from "@util/getTimeAsCode";
 import { Column, Entity, PrimaryColumn } from "typeorm";
 
 import { TimerEntry } from "./Timers";
@@ -15,6 +16,9 @@ const remindQuotes = [
 @Entity()
 class ReminderEntity extends TimerEntry {
 
+  @PrimaryColumn()
+  readonly code = getTimeAsCode();
+
   @Column()
   readonly memberID: string;
 
@@ -30,8 +34,6 @@ export class Reminder extends ReminderEntity {
 
   static readonly Entity = ReminderEntity;
 
-  @PrimaryColumn()
-  readonly code: string = process.hrtime.bigint().toString(36);
 
   constructor(
     time: Reminder["time"],
