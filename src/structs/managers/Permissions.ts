@@ -28,7 +28,7 @@ export class PermissionsManager {
       this.commandHierarchies.set(memberID, commandHierarchies);
     }
 
-    this.reloadMemberHierarchies();
+    client.internalEvents.once(`guildLoad`, () => this.reloadMemberHierarchies());
   }
 
   async getCommandHierarchies(memberID: string): Promise<PermissionData["commandHierarchies"]> {
@@ -91,7 +91,7 @@ export class PermissionsManager {
   }
 
   reloadMemberHierarchies(): void {
-    const remainingStaff = this.client.MAIN_GUILD.members.cache
+    const remainingStaff = this.client[`${this.client.botIdentity.toUpperCase()}_GUILD` as "MAIN_GUILD" | "TEST_GUILD"].members.cache
       .filter(member => member.id !== MASTER_ID && STAFF_ROLES.some(STAFF_ROLE => member.roles.cache.has(STAFF_ROLE)));
     this.memberHierarchies.sweep((memberHierarchy, memberID) => remainingStaff.has(memberID));
   }
