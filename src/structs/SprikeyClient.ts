@@ -3,31 +3,26 @@ import { TableMetadata } from "@db/config";
 import { InitiatedConnection } from "@db/connection";
 import { generateBotCache } from "@db/lib/cache";
 import { OptionsManager } from "@db/lib/managers/Options";
-import { Client, Collection, Guild } from "discord.js";
+import { Client, Guild } from "discord.js";
+import { EventEmitter } from "events";
 
+import { CommandManager } from "./managers/Command";
+import { ListenerManager } from "./managers/Listeners";
 import { PermissionsManager } from "./managers/Permissions";
-import { Categories, Command } from "./typedefs/Command";
 
 export class SprikeyClient extends Client {
+
+  readonly botIdentity = process.env.BOT_IDENTITY as "test" | "main";
 
   readonly botOptions: OptionsManager;
 
   readonly cache = generateBotCache();
 
-  readonly categories: Collection<Categories, this["commands"]> = new Collection(
-    Object.keys(Categories).map(category => [
-      Categories[category as CategoryKeys],
-      new Collection()
-    ])
-  );
-
-  readonly commands: Collection<string, Command> = new Collection();
-
   readonly db: TableMetadata.Managers;
 
   readonly managers: ManagerInstances;
 
-  eventState = false;
+  readonly internalEvents = new EventEmitter();
 
   constructor(readonly connection: InitiatedConnection) {
 
@@ -43,14 +38,27 @@ export class SprikeyClient extends Client {
         activity: {
           name: `Initiating bot...`
         }
-      }
+      },
+      fetchAllMembers: true
     });
 
     this.botOptions = connection.botOptions;
     this.db = connection.db;
 
     this.managers = {
-      permissions: new PermissionsManager(this)
+      command: new CommandManager(this),
+      listener: new ListenerManager(this),
+      permission: new PermissionsManager(this)
+    };
+
+    this.once(`ready`, () => this.generateInternalEvents());
+
+  }
+
+  async fetchGuilds(): Promise<{ MAIN_GUILD: Guild | null; TEST_GUILD: Guild }> {
+    return {
+      MAIN_GUILD: this.botIdentity === `main` ? await this.guilds.fetch(GUILD.MAIN) : null,
+      TEST_GUILD: await this.guilds.fetch(GUILD.TEST)
     };
   }
 
@@ -61,10 +69,15 @@ export class SprikeyClient extends Client {
   get TEST_GUILD(): Guild {
     return this.guilds.cache.get(GUILD.TEST)!;
   }
+
+  private generateInternalEvents(): void {
+    void this.fetchGuilds()
+      .then(() => this.internalEvents.emit(`guildLoad`));
+  }
 }
 
 interface ManagerInstances {
-  permissions: PermissionsManager;
+  command: CommandManager;
+  listener: ListenerManager;
+  permission: PermissionsManager;
 }
-
-type CategoryKeys = keyof typeof Categories;
