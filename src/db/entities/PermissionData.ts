@@ -1,15 +1,14 @@
 import { DBDeserializers, DBSerializers } from "@db/lib/serialization";
-import { Collection } from "discord.js";
-import { Column, Entity } from "typeorm";
+import { Column, Entity, PrimaryColumn } from "typeorm";
 
 @Entity()
 class PermissionDataEntity {
 
-  @Column()
+  @PrimaryColumn()
   readonly memberID: string;
 
-  @Column({ transformer: { from: DBSerializers.absolute, to: DBDeserializers.absolute } })
-  readonly commandHierarchies: Collection<string, number>;
+  @Column({ type: `varchar`, length: 2 ** 14, transformer: { from: DBSerializers.absolute, to: DBDeserializers.absolute } })
+  readonly commandHierarchies: Map<string, number>;
 
 }
 
