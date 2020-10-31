@@ -10,6 +10,8 @@ export class Benchmark {
 
   timeTaken = BigInt(0);
 
+  loggingToConsole = false;
+
   private readonly applyFormatting = chalk
     .bgHex(`#928EDC`)
     .hex(`#333333`)
@@ -37,7 +39,7 @@ export class Benchmark {
   display(description = ``): string {
     const readable = this.readable();
 
-    console.log(`${
+    if (this.loggingToConsole) console.log(`${
       this.applyFormatting(` ${this.title} `)
     } ${
       description
@@ -45,4 +47,11 @@ export class Benchmark {
 
     return readable;
   }
+
+  logToConsole(): Benchmark {
+    this.loggingToConsole = true;
+
+    return this;
+  }
+
 }
