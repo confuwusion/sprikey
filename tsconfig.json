@@ -18,6 +18,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "paths": {
+      "@commands/*": [ "commands/*" ],
       "@constants/*": [ "configs/constants/*" ],
       "@entities/*": [ "db/entities/*" ],
       "@db/*": [ "db/*" ],
