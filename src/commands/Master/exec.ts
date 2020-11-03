@@ -35,7 +35,7 @@ export default class ExecCommand extends Command<ExecArgs> {
 
     try {
       execBenchmark.start();
-      evalResult = eval(`${args.code}`) as string | Promise<unknown>;
+      evalResult = eval(`${args.content}`) as string | Promise<unknown>;
       execBenchmark.stop();
 
       evalOutput = inspect(evalResult);
@@ -57,12 +57,8 @@ export default class ExecCommand extends Command<ExecArgs> {
     });
   }
 
-  parse(client: SprikeyClient, _message: Message, [ code ]: string[]): ExecArgs {
-    return { code };
-  }
-
 }
 
 interface ExecArgs {
-  readonly code: string;
+  readonly content: string;
 }
