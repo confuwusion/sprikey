@@ -32,4 +32,9 @@ export class LogChannel extends LogChannelEntity {
       : new LogChannel(type, id as CHANNELS.LogSafe);
   }
 
+  static isLogSafe(channelID: string, parentID: string | null): channelID is CHANNELS.LogSafe {
+    return CATEGORIES.LOG_SAFE.includes(parentID as CATEGORIES.LogSafe)
+      || CHANNELS.LOG_SAFE.includes(channelID as CHANNELS.LogSafe);
+  }
+
 }
