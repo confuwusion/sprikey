@@ -204,9 +204,18 @@ export namespace CHANNELS {
       MOD_BOT: ALL.MOD_BOT
     } as const;
 
+    export const LOG_SAFE = {
+      BOOSTER_PRIVATE: BOOSTER.BOOSTER_PRIVATE,
+      MOD_TRAINING: MOD.MOD_TRAINING,
+      MOD_DEBATE: MOD.MOD_DEBATE,
+      MOD_BOT: MOD.MOD_BOT
+    } as const;
+
     export type Any = (typeof ALL)[keyof typeof ALL];
 
     export type Command = (typeof COMMAND)[keyof typeof COMMAND];
+
+    export type LogSafe = (typeof LOG_SAFE)[keyof typeof LOG_SAFE];
 
   }
 
@@ -215,11 +224,16 @@ export namespace CHANNELS {
     ...Object.values(TEST.COMMAND)
   ] as Command[];
 
+  export const LOG_SAFE = [
+    ...Object.values(MAIN.LOG_SAFE),
+    ...Object.values(TEST.LOG_SAFE)
+  ];
+
   export type Any = MAIN.Any | TEST.Any;
 
   export type Command = MAIN.Command | TEST.Command;
 
-  export type LogSafe = MAIN.LogSafe;
+  export type LogSafe = MAIN.LogSafe | TEST.LogSafe;
 
 }
 
@@ -245,6 +259,26 @@ export namespace CATEGORIES {
       BOTS: ALL.BOTS
     } as const;
 
+    export type LogSafe = (typeof LOG_SAFE)[keyof typeof LOG_SAFE];
+
   }
+
+  export namespace TEST {
+
+    export const ALL = {
+      LOGS: `688660210579275810`
+    } as const;
+
+    export const LOG_SAFE = {
+      LOGS: ALL.LOGS
+    } as const;
+
+    export type LogSafe = (typeof LOG_SAFE)[keyof typeof LOG_SAFE];
+
+  }
+
+  export const LOG_SAFE = [ ...Object.values(MAIN.LOG_SAFE), ...Object.values(TEST.LOG_SAFE) ] as const;
+
+  export type LogSafe = MAIN.LogSafe | TEST.LogSafe;
 
 }
