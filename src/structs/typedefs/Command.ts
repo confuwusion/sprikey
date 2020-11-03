@@ -8,6 +8,7 @@ import { Optional } from "utility-types";
 
 const INPUT_PLACEHOLDER = `{input}`;
 const INPUT_PATTERN = new RegExp(INPUT_PLACEHOLDER.replace(/(\{|\})/g, (_, brace: string) => `\\${brace}`), `gi`);
+const BLANK_CAPTURE = [ `` ];
 
 export enum Categories {
   General,
@@ -158,17 +159,23 @@ class CommandUsageEntry {
    * ```
    **/
   readonly parameters: string[];
+
+  readonly description?: string;
+
 }
 
 class CommandUsage implements CommandUsageEntry {
 
-  readonly title: string;
+  readonly title: CommandUsageEntry["title"];
 
-  readonly parameters: string[];
+  readonly parameters: CommandUsageEntry["parameters"];
 
-  constructor({ title, parameters }: CommandUsageEntry) {
+  readonly description?: CommandUsageEntry["description"];
+
+  constructor({ title, parameters, description }: CommandUsageEntry) {
     this.title = title;
     this.parameters = parameters;
+    this.description = description;
   }
 }
 
@@ -257,6 +264,10 @@ interface CommandInterface {
 
 }
 
+export type ParseReturnType<CommandArgs extends object> = CommandArgs | MessageEmbed;
+
+export type ParseArg = readonly (readonly string[])[];
+
 /*
  * A member-executable instructions for the bot
  **/
@@ -339,7 +350,7 @@ export class Command<CommandArgs extends object> implements CommandInterface {
       .setAuthor(titleCase(this.name), this.icon.url);
   }
 
-  extractArgs(content: string): readonly (string | readonly string[])[] {
+  extractArgs(content: string): readonly (readonly string[])[] {
     const {
       args: { detectors, fillers = [] }
     } = this;
@@ -354,22 +365,23 @@ export class Command<CommandArgs extends object> implements CommandInterface {
         ? new RegExp(`^((?:(?:${detector.source})\\s*)+)`)
         : detector;
 
-      const userCapture = (captureRegex.exec(remaining) || ``)[0].replace(/\$&/g, `\\$\\&`);
+      const userCapture = (captureRegex.exec(remaining) || BLANK_CAPTURE)[0].replace(/\$&/g, `\\$\\&`);
       const completeArg = filler.replace(INPUT_PATTERN, userCapture).trim();
-      const wholeCapture = detector.exec(completeArg) || ``;
+      const wholeCapture = detector.exec(completeArg) || BLANK_CAPTURE;
 
       remaining = remaining.slice(userCapture.length).trim();
 
-      return wholeCapture && !detector.global
-        ? wholeCapture[0]
-        : wholeCapture;
+      return wholeCapture;
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, class-methods-use-this
-  parse(_client: SprikeyClient, _message: Message, arg: readonly (string | readonly string[])[]): CommandArgs {
+  // eslint-disable-next-line class-methods-use-this, @typescript-eslint/require-await
+  async parse(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    client: SprikeyClient, message: Message, [ args ]: ParseArg
+  ): Promise<CommandArgs | MessageEmbed> {
     // @ts-ignore
-    return { content: arg };
+    return { content: args };
   }
 
   // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
