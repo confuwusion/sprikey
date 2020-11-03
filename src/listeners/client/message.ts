@@ -1,5 +1,5 @@
 import { SprikeyClient } from "@structs/SprikeyClient";
-import { Message } from "discord.js";
+import { Message, MessageEmbed } from "discord.js";
 
 const COMMAND_MESSAGE_PATTERN = /^(?<commandName>\w+|\$)(?:\s(?<commandArguments>[^]*))?$/;
 
@@ -30,6 +30,9 @@ export namespace messageListener {
 
     const parsedArgs = await command.parse(client, message, extractedArgs);
 
+    if (parsedArgs instanceof MessageEmbed) return void await message.channel.send(parsedArgs);
+
+    // @ts-ignore
     await command.run(client, message, parsedArgs);
   }
 
