@@ -20,13 +20,13 @@ class ReminderEntity extends TimerEntry {
   readonly code = getTimeAsCode();
 
   @Column()
-  readonly memberID: string;
+  readonly memberID!: string;
 
   @Column()
-  readonly channelID: string;
+  readonly channelID!: string;
 
   @Column()
-  readonly message: string;
+  readonly message!: string;
 
 }
 

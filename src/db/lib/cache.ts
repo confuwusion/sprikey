@@ -1,4 +1,4 @@
-import { PermissionCheck } from "@structs/typedefs/Command";
+import { PermissionCheck } from "@structs/SprikeyCommand";
 import { SizedArray } from "@util/SizedArray";
 import { Role } from "discord.js";
 

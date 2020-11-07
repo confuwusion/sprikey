@@ -6,10 +6,10 @@ import { Column, Entity, PrimaryColumn } from "typeorm";
 class LockoutEntity {
 
   @PrimaryColumn()
-  readonly memberID: string;
+  readonly memberID!: string;
 
   @Column({ type: `simple-array` })
-  readonly channelIDs: CHANNELS.Any[];
+  readonly channelIDs!: CHANNELS.Any[];
 
   addChannels(...channelIDs: LockoutEntity["channelIDs"]): SplitArrayResult<CHANNELS.Any> {
     const splitResult = this.filterExistingChannels(channelIDs);

@@ -5,10 +5,10 @@ import { Column, Entity, PrimaryColumn } from "typeorm";
 class PermissionDataEntity {
 
   @PrimaryColumn()
-  readonly memberID: string;
+  readonly memberID!: string;
 
   @Column({ type: `varchar`, length: 2 ** 14, transformer: { from: DBSerializers.absolute, to: DBDeserializers.absolute } })
-  readonly commandHierarchies: Map<string, number>;
+  readonly commandHierarchies!: Map<string, number>;
 
 }
 

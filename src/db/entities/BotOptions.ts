@@ -15,7 +15,7 @@ type OptionKeys = keyof Options;
 class BotOptionEntity<OptionKey extends OptionKeys = OptionKeys> {
 
   @PrimaryColumn(NormalTextColumn)
-  readonly option: OptionKey;
+  readonly option!: OptionKey;
 
   @Column({
     ...NormalTextColumn,
@@ -24,7 +24,7 @@ class BotOptionEntity<OptionKey extends OptionKeys = OptionKeys> {
       to: DBSerializers.absolute
     }
   })
-  data: Options[OptionKey];
+  data!: Options[OptionKey];
 
 }
 

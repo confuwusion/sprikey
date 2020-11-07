@@ -6,10 +6,10 @@ import { Column, Entity, PrimaryColumn } from "typeorm";
 class LogChannelEntity {
 
   @PrimaryColumn()
-  readonly type: string;
+  readonly type!: string;
 
   @Column()
-  readonly channelID: CHANNELS.LogSafe;
+  readonly channelID!: CHANNELS.LogSafe;
 
 }
 

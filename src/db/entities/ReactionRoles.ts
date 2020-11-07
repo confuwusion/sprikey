@@ -7,10 +7,10 @@ class ReactionRoleEntity {
   readonly code: string = getTimeAsCode();
 
   @Column()
-  readonly messageID: string;
+  readonly messageID!: string;
 
   @Column({ type: `simple-json` })
-  readonly reactionRoles: readonly {
+  readonly reactionRoles!: readonly {
     readonly name: string;
     readonly roleID: string;
   }[];

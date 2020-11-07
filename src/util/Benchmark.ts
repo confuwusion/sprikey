@@ -1,6 +1,6 @@
 import * as chalk from "chalk";
 
-import { formatBigIntTime } from "./displayTime";
+import { formatBigIntTime } from "./formatTime";
 
 export class Benchmark {
 
