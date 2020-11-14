@@ -4,6 +4,7 @@
     "node": true
   },
   "extends": [
+    "eslint:recommended",
     "plugin:jsdoc/recommended"
   ],
   "globals": {
@@ -212,7 +213,7 @@
         "@typescript-eslint/prefer-regexp-exec": "error",
         "@typescript-eslint/prefer-string-starts-ends-with": "error",
         "@typescript-eslint/promise-function-async": "error",
-        "@typescript-eslint/quotes": [ "error", "backtick" ],
+        "@typescript-eslint/quotes": [ "error", "double" ],
         "@typescript-eslint/require-array-sort-compare": "error",
         "@typescript-eslint/require-await": "error",
         "@typescript-eslint/restrict-plus-operands": [
@@ -298,7 +299,7 @@
     "comma-dangle": "error",
     "comma-spacing": "error",
     "comma-style": ["error", "last"],
-    "complexity": "off",
+    "complexity": ["error", 2],
     "computed-property-spacing": ["error", "never"],
     "consistent-return": "off",
     "consistent-this": "off",
@@ -586,7 +587,7 @@
     "prefer-spread": "error",
     "prefer-template": "error",
     "quote-props": ["error", "as-needed"],
-    "quotes": [ "error", "backtick" ],
+    "quotes": [ "error", "double" ],
     "radix": "error",
     "require-atomic-updates": "off",
     "require-await": "error",
