@@ -9,7 +9,7 @@ class ReactionRoleEntity {
   @Column()
   readonly messageID!: string;
 
-  @Column({ type: `simple-json` })
+  @Column({ type: "simple-json" })
   readonly reactionRoles!: readonly {
     readonly name: string;
     readonly roleID: string;

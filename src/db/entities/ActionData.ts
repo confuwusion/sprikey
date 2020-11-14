@@ -10,7 +10,7 @@ class ActionEntity {
   @Column()
   readonly name!: string;
 
-  @Column({ type: `simple-json` })
+  @Column({ type: "simple-json" })
   readonly data!: (string | number | boolean)[];
 
 }

@@ -7,16 +7,16 @@ import { PermissionData } from "@entities/PermissionData";
 import { join } from "path";
 import { Connection, ConnectionOptions, Repository } from "typeorm";
 
-const DATA_FOLDER = join(__dirname, `../../data`);
-const MAIN_DATABASE_FILENAME = `main`;
-const DRIVER_NAME = `sqlite3`;
+const DATA_FOLDER = join(__dirname, "../../data");
+const MAIN_DATABASE_FILENAME = "main";
+const DRIVER_NAME = "sqlite3";
 
-const MODE = process.env.MODE as (typeof DB_MODES[number] | undefined) ?? `development`;
+const MODE = process.env.MODE as (typeof DB_MODES[number] | undefined) ?? "development";
 
 const dbPaths = {
-  test: `:memory:` as string,
-  development: generateDBPath(`dev`),
-  production: generateDBPath(`main`)
+  test: ":memory:" as string,
+  development: generateDBPath("dev"),
+  production: generateDBPath("main")
 } as const;
 
 const DB_MODES = Object.keys(dbPaths) as (keyof typeof dbPaths)[];
@@ -38,32 +38,32 @@ const entityClasses = Object.fromEntries(
 ) as EntityClasses;
 
 const baseConnctionConfig: Partial<ConnectionOptions> = {
-  type: `sqlite`,
+  type: "sqlite",
   cache: { duration: 0 },
   entities: Object.values(entityClasses)
     .map(enityConfig => enityConfig),
   synchronize: true,
   logging: false,
-  migrations: [ `src/migration/**/*.ts` ],
-  subscribers: [ `src/subscriber/**/*.ts` ],
+  migrations: [ "src/migration/**/*.ts" ],
+  subscribers: [ "src/subscriber/**/*.ts" ],
   cli: {
-    entitiesDir: ``,
-    migrationsDir: `src/migration`,
-    subscribersDir: `src/subscriber`
+    entitiesDir: "",
+    migrationsDir: "src/migration",
+    subscribersDir: "src/subscriber"
   }
 };
 
 export namespace ConnectionConfig {
 
   export const main = {
-    name: `main`,
+    name: "main",
     database: dbPaths[MODE],
     ...baseConnctionConfig
   } as ConnectionOptions;
 
   export const cache = {
-    name: `cache`,
-    database: `:memory:`,
+    name: "cache",
+    database: ":memory:",
     ...baseConnctionConfig
   } as ConnectionOptions;
 

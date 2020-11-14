@@ -22,8 +22,8 @@ export class TimerEntry {
   ) {
     const dateNow = Date.now();
     if (time <= dateNow) throw new Error(time <= dateNow + 5e3
-      ? `The provided time should not be smaller than 5 seconds from now`
-      : `The provided time cannot be smaller than the current time!`
+      ? "The provided time should not be smaller than 5 seconds from now"
+      : "The provided time cannot be smaller than the current time!"
     );
 
     this.type = type;

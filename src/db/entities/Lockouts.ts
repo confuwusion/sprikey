@@ -8,7 +8,7 @@ class LockoutEntity {
   @PrimaryColumn()
   readonly memberID!: string;
 
-  @Column({ type: `simple-array` })
+  @Column({ type: "simple-array" })
   readonly channelIDs!: CHANNELS.Any[];
 
   addChannels(...channelIDs: LockoutEntity["channelIDs"]): SplitArrayResult<CHANNELS.Any> {

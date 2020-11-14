@@ -3,12 +3,12 @@ import * as crypto from "crypto";
 import { ClientEvents } from "discord.js";
 import { Column, Entity, PrimaryColumn } from "typeorm";
 
-const algorithm = `aes-192-cbc`;
+const algorithm = "aes-192-cbc";
 const password = process.env.DB_WEBHOOK_ENCRYPTION_TOKEN;
 
-if (!password) throw new Error(`No database encryption password was provided!`);
+if (!password) throw new Error("No database encryption password was provided!");
 
-const encryptionKey = crypto.scryptSync(password, `salt`, 24);
+const encryptionKey = crypto.scryptSync(password, "salt", 24);
 const iv = Buffer.alloc(16, 0);
 
 
@@ -24,7 +24,7 @@ class IFTTTWebhookEntity {
   @Column()
   readonly key!: string;
 
-  @Column({ type: `simple-array` })
+  @Column({ type: "simple-array" })
   readonly events!: ClientEventNames[];
 
   addEvents(...events: IFTTTWebhookEntity["events"]): SplitArrayResult<ClientEventNames> {
@@ -58,16 +58,16 @@ class IFTTTWebhookEntity {
     return new Promise(resolve => {
       const cipher = crypto.createCipheriv(algorithm, encryptionKey, iv);
 
-      let encrypted = ``;
-      cipher.on(`readable`, () => {
+      let encrypted = "";
+      cipher.on("readable", () => {
         // eslint-disable-next-line @typescript-eslint/init-declarations
         let chunk: Buffer;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         while ((chunk = cipher.read()) !== null) {
-          encrypted += chunk.toString(`base64`);
+          encrypted += chunk.toString("base64");
         }
       });
-      cipher.on(`end`, () => {
+      cipher.on("end", () => {
         resolve(encrypted);
       });
 
@@ -81,21 +81,21 @@ class IFTTTWebhookEntity {
     return new Promise(resolve => {
       const decipher = crypto.createDecipheriv(algorithm, encryptionKey, iv);
 
-      let decrypted = ``;
-      decipher.on(`readable`, () => {
+      let decrypted = "";
+      decipher.on("readable", () => {
         // eslint-disable-next-line @typescript-eslint/init-declarations
         let chunk: Buffer;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         while ((chunk = decipher.read()) !== null) {
-          decrypted += chunk.toString(`utf8`);
+          decrypted += chunk.toString("utf8");
         }
       });
 
-      decipher.on(`end`, () => {
+      decipher.on("end", () => {
         resolve(decrypted);
       });
 
-      decipher.write(key, `base64`);
+      decipher.write(key, "base64");
       decipher.end();
     });
   }

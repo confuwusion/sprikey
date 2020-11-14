@@ -28,7 +28,7 @@ export class LogChannel extends LogChannelEntity {
     const LogSafeCategories = Object.values(CATEGORIES.MAIN.LOG_SAFE) as string[];
 
     return parentID && !LogSafeCategories.includes(parentID)
-      ? new Error(`The provided channel cannot be set as a log channel!`)
+      ? new Error("The provided channel cannot be set as a log channel!")
       : new LogChannel(type, id as CHANNELS.LogSafe);
   }
 

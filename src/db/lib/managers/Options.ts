@@ -14,7 +14,7 @@ export class OptionsManager extends BaseDBManager<BotOption> {
   readonly cache: Options = {
     lastActive: 0,
     uptime: 0,
-    pingRecord: { time: 0, memberID: `` }
+    pingRecord: { time: 0, memberID: "" }
   };
 
   async get<Option extends keyof Options>(option: Option): Promise<Options[Option]> {
