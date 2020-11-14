@@ -4,9 +4,9 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "pnpm: build",
+      "label": "ttsc: build",
       "type": "shell",
-      "command": "pnpm run build"
+      "command": "pnpx ttsc"
     }
   ]
 }

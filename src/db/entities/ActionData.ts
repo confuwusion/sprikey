@@ -8,10 +8,10 @@ class ActionEntity {
   readonly code: string = getTimeAsCode();
 
   @Column()
-  readonly name: string;
+  readonly name!: string;
 
   @Column({ type: `simple-json` })
-  readonly data: (string | number | boolean)[];
+  readonly data!: (string | number | boolean)[];
 
 }
 

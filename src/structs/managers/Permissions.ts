@@ -24,11 +24,14 @@ export class PermissionsManager {
   readonly permissionsTable: TableMetadata.Managers["PermissionData"];
 
   constructor(readonly client: SprikeyClient) {
+
+    this.permissionsTable = client.db.PermissionData;
+
     for (const { memberID, commandHierarchies } of client.connection.loadedEntries.PermissionData) {
       this.commandHierarchies.set(memberID, commandHierarchies);
     }
 
-    client.internalEvents.once(`guildLoad`, () => this.reloadMemberHierarchies());
+    client.internalEvents.once("guildLoad", () => this.reloadMemberHierarchies());
   }
 
   async getCommandHierarchies(memberID: string): Promise<PermissionData["commandHierarchies"]> {
@@ -48,11 +51,13 @@ export class PermissionsManager {
     commandHierarchy: number
   ): Promise<number | undefined> {
     const commandHierarchies = this.commandHierarchies.has(memberID)
-      ? this.commandHierarchies.get(memberID) as Collection<string, number>
-      : this.commandHierarchies.set(memberID, new Collection()).get(memberID) as Collection<string, number>;
+      ? this.commandHierarchies.get(memberID)
+      : this.commandHierarchies.set(memberID, new Collection()).get(memberID);
 
+    // @ts-ignore
     commandHierarchies.set(commandName, commandHierarchy);
 
+    // @ts-ignore
     const savedEntry = await this.permissionsTable.save({ memberID, commandHierarchies });
 
     return savedEntry.mainResult[0].commandHierarchies.get(commandName);
@@ -91,7 +96,8 @@ export class PermissionsManager {
   }
 
   reloadMemberHierarchies(): void {
-    const remainingStaff = this.client[`${this.client.botIdentity.toUpperCase()}_GUILD` as "MAIN_GUILD" | "TEST_GUILD"].members.cache
+    const selectedGuild = `${this.client.botIdentity.toUpperCase()}_GUILD` as "MAIN_GUILD" | "TEST_GUILD";
+    const remainingStaff = this.client[selectedGuild].members.cache
       .filter(member => member.id !== MASTER_ID && STAFF_ROLES.some(STAFF_ROLE => member.roles.cache.has(STAFF_ROLE)));
     this.memberHierarchies.sweep((memberHierarchy, memberID) => remainingStaff.has(memberID));
   }

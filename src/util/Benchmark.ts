@@ -1,6 +1,6 @@
 import * as chalk from "chalk";
 
-import { formatBigIntTime } from "./displayTime";
+import { formatBigIntTime } from "./formatTime";
 
 export class Benchmark {
 
@@ -13,8 +13,8 @@ export class Benchmark {
   loggingToConsole = false;
 
   private readonly applyFormatting = chalk
-    .bgHex(`#928EDC`)
-    .hex(`#333333`)
+    .bgHex("#928EDC")
+    .hex("#333333")
     .dim;
 
   constructor(readonly title: string) {}
@@ -36,7 +36,7 @@ export class Benchmark {
     return formatBigIntTime(this.timeTaken);
   }
 
-  display(description = ``): string {
+  display(description = ""): string {
     const readable = this.readable();
 
     if (this.loggingToConsole) console.log(`${

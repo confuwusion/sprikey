@@ -8,7 +8,7 @@
       "name": "Launch Bot",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}\\dist\\bot.js",
+      "program": "${workspaceFolder}/dist/index.js",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -21,8 +21,8 @@
       "name": "Build-Launch Bot",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}\\dist\\bot.js",
-      "preLaunchTask": "pnpm: build",
+      "program": "${workspaceFolder}/dist/index.js",
+      "preLaunchTask": "ttsc: build",
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ],
