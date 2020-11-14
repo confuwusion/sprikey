@@ -19,13 +19,13 @@ type ClientEventNames = keyof ClientEvents;
 class IFTTTWebhookEntity {
 
   @PrimaryColumn()
-  readonly memberID: string;
+  readonly memberID!: string;
 
   @Column()
-  readonly key: string;
+  readonly key!: string;
 
   @Column({ type: `simple-array` })
-  readonly events: ClientEventNames[];
+  readonly events!: ClientEventNames[];
 
   addEvents(...events: IFTTTWebhookEntity["events"]): SplitArrayResult<ClientEventNames> {
     const splitResult = this.filterExistingEvents(events);

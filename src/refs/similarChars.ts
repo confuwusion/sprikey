@@ -6,7 +6,7 @@ export const Alphabets = [
 ] as const;
 
 export const SimilarChars: {
-  [K in typeof Alphabets[number]]: ReadonlyArray<string>
+  [K in typeof Alphabets[number]]: readonly string[]
 } = {
   a: [ `🇦`, `🅰️`, `/\\\\`, `@` ],
   b: [ `🇧`, `🅱️`, `\\|3`, `\\|8` ],
