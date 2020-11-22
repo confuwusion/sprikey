@@ -2,7 +2,7 @@
   "name": "sprikey",
   "version": "2.0.0",
   "description": "Sprikey bot for Communimate Discord server",
-  "main": "dist/bot.js",
+  "main": "dist/index.js",
   "engines": {
     "node": "12.x"
   },
@@ -29,13 +29,14 @@
     }
   },
   "dependencies": {
-    "bufferutil": "^4.0.1",
+    "bufferutil": "^4.0.2",
     "canvas": "^2.6.1",
     "chalk": "^4.1.0",
     "color-scheme": "^1.0.1",
     "confusables": "^1.0.0",
     "cron": "^1.8.2",
     "date-fns": "^2.16.1",
+    "discord-akairo": "^8.1.0",
     "discord.js": "^12.4.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
@@ -45,36 +46,32 @@
     "signale": "^1.4.0",
     "sqlite3": "^5.0.0",
     "string-fn": "^2.12.2",
-    "typeorm": "^0.2.28",
-    "utf-8-validate": "^5.0.2"
+    "typeorm": "^0.2.29",
+    "utf-8-validate": "^5.0.3"
   },
   "devDependencies": {
-    "@types/express": "^4.17.8",
-    "@types/jest": "^26.0.15",
-    "@types/node": "^14.14.2",
+    "@types/express": "^4.17.9",
+    "@types/node": "^14.14.9",
     "@types/signale": "^1.4.1",
     "@types/sqlite3": "^3.1.6",
-    "@typescript-eslint/eslint-plugin": "^4.5.0",
-    "@typescript-eslint/parser": "^4.5.0",
+    "@typescript-eslint/eslint-plugin": "^4.8.1",
+    "@typescript-eslint/parser": "^4.8.1",
     "@zerollup/ts-transform-paths": "^1.7.18",
     "alias-hq": "^4.1.5",
-    "eslint": "^7.12.0",
-    "eslint-plugin-jsdoc": "^30.7.3",
+    "eslint": "^7.14.0",
+    "eslint-plugin-jsdoc": "^30.7.8",
     "eslint-plugin-simple-import-sort": "^5.0.3",
     "husky": "^4.3.0",
-    "jest": "^26.6.1",
-    "jest-module-name-mapper": "^0.1.5",
-    "lint-staged": "^10.4.2",
-    "ts-jest": "^26.4.2",
+    "lint-staged": "^10.5.1",
     "ts-node": "^9.0.0",
     "ttypescript": "^1.5.12",
     "typedoc": "^0.19.2",
-    "typescript": "^4.0.3",
+    "typescript": "^4.1.2",
     "utility-types": "^3.10.0"
   },
   "author": "spuggle",
   "license": "ISC",
   "keywords": [
-     "sprikey"
+    "sprikey"
   ]
 }
