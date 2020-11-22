@@ -49,7 +49,7 @@
         "@typescript-eslint/comma-spacing": "error",
         "@typescript-eslint/default-param-last": "error",
         "@typescript-eslint/dot-notation": "error",
-        "@typescript-eslint/explicit-function-return-type": "error",
+        "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/func-call-spacing": "error",
         "@typescript-eslint/indent": [
           "error",
@@ -299,7 +299,7 @@
     "comma-dangle": "error",
     "comma-spacing": "error",
     "comma-style": ["error", "last"],
-    "complexity": ["error", 2],
+    "complexity": ["error", 6],
     "computed-property-spacing": ["error", "never"],
     "consistent-return": "off",
     "consistent-this": "off",
@@ -603,7 +603,7 @@
         }
       }
     ],
-    "require-unicode-regexp": "off",
+    "require-unicode-regexp": "error",
     "rest-spread-spacing": ["error", "never"],
     "semi": ["error", "always"],
     "semi-spacing": ["error"],
