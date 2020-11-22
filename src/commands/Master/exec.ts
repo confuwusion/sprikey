@@ -1,62 +1,86 @@
-/* eslint-disable class-methods-use-this */
-import { ICONS } from "@constants/Icons";
-import { SprikeyClient } from "@structs/SprikeyClient";
-import { Categories, Command, CommandArguments } from "@structs/typedefs/Command";
+import { CommandParameters, SprikeyCommand } from "@structs/SprikeyCommand";
 import { Benchmark } from "@util/Benchmark";
 import { Message } from "discord.js";
 import { inspect } from "util";
+import * as vm from "vm";
 
-export default class ExecCommand extends Command<ExecArgs> {
+const vmOptions = {
+  filename: "eval"
+};
+export default class ExecCommand extends SprikeyCommand {
 
   constructor() {
-    super(`exec`, {
-      description: `Executes NodeJS code`,
-      category: Categories.Master,
-      icon: ICONS.EXEC,
-      args: new CommandArguments({
-        detectors: [ /[^]+/ ],
+    super("exec", {
+      description: "Executes NodeJS code",
+      parameters: new CommandParameters({
         usages: [ {
-          title: `Execute code`,
+          title: "Execute code",
           parameters: [
-            `[Code]`
+            "[Code]"
           ]
         } ]
       })
+    }, {
+      args: [ {
+        id: "content",
+        type: "string",
+        match: "content"
+      } ]
     });
   }
 
-  async run(client: SprikeyClient, { channel }: Message, args: ExecArgs): Promise<void> {
+  // eslint-disable-next-line complexity, class-methods-use-this
+  async exec(message: Message, { content }: ExecArgs): Promise<void> {
 
-    let evalResult: string | Promise<unknown> = ``;
-    let evalOutput = ``;
+    const vmContext = {
+      message,
+      client: this.client,
+      command: this,
+      execBenchmark: new Benchmark("Exec Benchmark")
+    } as const;
 
-    const benchmark = new Benchmark(`Benchmark`);
-    const execBenchmark = new Benchmark(`Exec Benchmark`);
+    vm.createContext(vmContext);
+
+    let vmResult: unknown = "";
+    let execOutput: string | Promise<unknown> = "";
 
     try {
-      execBenchmark.start();
-      evalResult = eval(`${args.content}`) as string | Promise<unknown>;
-      execBenchmark.stop();
-
-      evalOutput = inspect(evalResult);
+      vmContext.execBenchmark.start();
+      vmResult = vm.runInContext(content, vmContext, vmOptions);
+      execOutput = inspect(vmResult);
     } catch (err) {
-      const error = err as Error;
-      let modifiedMessage = ``;
-
-      if (error.stack) {
-        // let {errorMessage, lineCode} = e.stack.match(/(?<errorMessage>[^\n]+)\n\s*at eval \(eval at exports.run \(\/home\/spuggle\/spuiiBot\/commands\/exec.js\:\d+\:\d+\), \<anonymous\>\:(?<lineCode>\d+:\d+)\)/).groups;
-        modifiedMessage = error.stack; // `Line ${lineCode} - ${errorMessage}`
-      }
-      evalOutput = modifiedMessage;
+      execOutput = generateErrorMessage(err as Error);
     }
-    const outputMessage = await channel.send(`${`**Execution time:** \`${execBenchmark.display()}\``}${benchmark.timeTaken ? `\n**Benchmark:** \`${benchmark.display()}\`` : ``} \`\`\`js\n< ${evalOutput}\`\`\``);
-    if (evalResult instanceof Promise) evalResult.finally(() => {
-      execBenchmark.stopTime = process.hrtime.bigint();
 
-      void outputMessage.edit(`${`**Execution time:** \`${execBenchmark.display()}\``}${benchmark.timeTaken ? `\n**Benchmark:** \`${benchmark.display()}\`` : ``} \`\`\`js\n< ${inspect(evalResult)}\`\`\``);
+    vmContext.execBenchmark.stop();
+
+    const outputMessage = await message.channel.send(getOutputContent(vmContext.execBenchmark, execOutput));
+
+    if (vmResult instanceof Promise) (vmResult as Promise<unknown>).finally(() => {
+      vmContext.execBenchmark.stop();
+
+      void outputMessage.edit(getOutputContent(vmContext.execBenchmark, execOutput as string));
     });
+
   }
 
+}
+
+const relevantErrorExtractor = /((?:[^\n]+\n){3})\n([^\n]+)\n\s+at eval:(\d+:\d+)[^]+$/u;
+const newlinePattern = /\n/gu;
+// eslint-disable-next-line complexity
+function generateErrorMessage(error: Error): string {
+
+  const [ , errorIndicator, errorMessage, errorPosition ] = relevantErrorExtractor.exec(error.stack ?? "") || [];
+
+  return `${errorIndicator.replace(newlinePattern, "\n  ")}${errorMessage}
+    at exec ${errorPosition}`;
+}
+
+function getOutputContent(execBenchmark: Benchmark, evalOutput: string): string {
+  return `${`**Execution Time:** \`${execBenchmark.display()}\``} \`\`\`js
+< ${evalOutput}
+\`\`\``;
 }
 
 interface ExecArgs {

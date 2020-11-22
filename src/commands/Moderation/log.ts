@@ -1,66 +1,64 @@
 import { CHANNELS } from "@constants/Channels";
-import { ICONS } from "@constants/Icons";
-import { CHANNNEL_PATTERN } from "@constants/Patterns";
 import { LogChannel } from "@entities/LogChannels";
 import { SprikeyClient } from "@structs/SprikeyClient";
+import { CommandParameters } from "@structs/SprikeyCommand";
 import { ActionCommand } from "@structs/typedefs/ActionCommand";
-import { Categories, CommandArguments, ParseArg } from "@structs/typedefs/Command";
+import { Argument, FailureData } from "discord-akairo";
 import { Message, MessageEmbed } from "discord.js";
 
-const logActions: LogArg["action"][] = [ `view`, `remove`, `set` ];
+const logActions: LogArg["action"][] = [ "view", "delete", "set" ];
 
-export class LogCommand extends ActionCommand<LogArg> {
+export default class LogCommand extends ActionCommand {
 
   constructor() {
-    super(`log`, {
-      description: `Manages logging channels`,
-      category: Categories.Moderation,
-      icon: ICONS.LOG,
-      args: new CommandArguments({
+    super("log", {
+      actions: logActions,
+      description: "Manages logging channels",
+      parameters: new CommandParameters({
         usages: [ {
-          title: `View all logging channels`,
+          title: "View all logging channels",
+          parameters: [ "view" ]
+        }, {
+          title: "Set a logging channel",
           parameters: [
-            `view`
+            "set",
+            "[Log Type]",
+            "[Channel Tag]"
           ]
         }, {
-          title: `Set a logging channel`,
+          title: "Remove a logging channel",
           parameters: [
-            `set`,
-            `[Log Type]`,
-            `[Channel Tag]`
+            "remove",
+            "[Log Type]"
           ]
-        }, {
-          title: `Remove a logging channel`,
-          parameters: [
-            `remove`,
-            `[Log Type]`
-          ]
-        } ],
-        detectors: [
-          /^set|view|remove/i,
-          /^\w+/,
-          /^(?:<#)?\d+>?/
-        ]
+        } ]
       })
+    }, {
+      channel: "guild",
+      typeResolver: async(type: string) => this.client.db.LogChannels.findOne({ type }),
+      errorData: {
+        reference: "A log channel by type",
+        states: [ "already exists", "does not exist" ],
+        missing: [ "type of the log" ]
+      }
     });
   }
 
   async view(client: SprikeyClient, { channel }: Message): Promise<void> {
     const associations = (await client.db.LogChannels.find())
       .map(({ type, channelID }) => `${type}: <#${channelID}>`)
-      .join(`\n`);
+      .join("\n");
 
     await channel.send(this.embeds.default(associations));
   }
 
-  async remove(client: SprikeyClient, { channel }: Message, { type: logType }: LogArgs["remove"]): Promise<void> {
-    const logChannel = await client.db.LogChannels.findOne({ type: logType });
-    if (!logChannel) return;
+  async delete(client: SprikeyClient, { channel }: Message, { logChannel }: DeleteLogArgs): Promise<void> {
+    const { channelID, type } = logChannel;
 
     await client.db.LogChannels.delete(logChannel);
 
     await channel.send(
-      this.embeds.success(`Successfully removed the log association **${logType}** from channel <#${logChannel.channelID}>!`)
+      this.embeds.success(`Successfully removed the log association **${type}** from channel <#${channelID}>!`)
     );
   }
 
@@ -72,39 +70,27 @@ export class LogCommand extends ActionCommand<LogArg> {
     await channel.send(this.embeds.success(`Successfully set channel <#${channelID}> as **${type}** channel!`));
   }
 
-  async parse(
-    { db }: SprikeyClient,
-    { guild }: Message,
-    [ [ rawAction ], [ type ], [ channelTag ] ]: ParseArg
-  ): Promise<LogArg | MessageEmbed> {
-    if (!rawAction) return this.embeds.error(`You need to provide the action you want to perform in this command!`);
+  // eslint-disable-next-line complexity
+  * parser() {
+    const action = (yield) as unknown as typeof logActions[number];
+    if (action === "view") return { action };
 
-    const action = rawAction.toLowerCase();
-    if (!ActionCommand.isAction(action, logActions)) return this.embeds.error(`Unknown action`);
+    const typeOrLogChannel = (yield) as string | Message["channel"];
 
-    if (action === `view`) return { action };
+    if (action === "delete") return { action, logChannel: typeOrLogChannel };
 
-    const registered = await db.LogChannels.findOne({ type });
+    const channelID = (yield {
+      type: Argument.compose("textChannel", (_, channel) => (channel as unknown as Message["channel"]).id),
+      otherwise: (_: Message, failureData?: FailureData): MessageEmbed => {
+        return this.embeds.error(failureData?.phrase
+          ? `A channel corresponding to "${failureData.phrase}" does not exist!`
+          : "You did not provide the channel you want to set as log channel!"
+        );
+      }
+    })! as Message["channel"] | null;
 
-    if (action === `remove`) {
-      if (!registered) return this.embeds.error(`There is no registered channel to log action **${type}**!`);
-      return { action, type };
-    }
-
-    if (registered && guild?.channels.resolve(registered.channelID)) return this.embeds.error(`The log action **${type}** is already registered to channel <#${registered.channelID}>!`);
-
-    const [ , channelID ] = CHANNNEL_PATTERN.exec(channelTag) ?? [];
-    if (!channelID) return this.embeds.error(``);
-
-    const selectedChannel = guild?.channels.resolve(channelID);
-
-    if (!selectedChannel) return this.embeds.error(`The channel by ID \`${channelID}\` does not exist!`);
-
-    if (!LogChannel.isLogSafe(channelID, selectedChannel.parentID)) return this.embeds.error(`Provided channel cannot be set as a log channel!`);
-
-    return { action, type, channelID };
+    return channelID && { action, type: typeOrLogChannel, channelID };
   }
-
 
 }
 
@@ -112,11 +98,16 @@ type LogArg = (LogArgs)[keyof LogArgs];
 
 interface LogArgs {
   view: { readonly action: "view" };
-  remove: { readonly action: "remove" } & LogType;
+  delete: { readonly action: "delete" } & LogType;
   set: {
     readonly action: "set";
     readonly channelID: CHANNELS.LogSafe;
   } & LogType;
+}
+
+interface DeleteLogArgs {
+  readonly action: "delete";
+  readonly logChannel: LogChannel;
 }
 
 type LogType = { readonly type: string };

@@ -1,80 +1,107 @@
-import { ICONS } from "@constants/Icons";
-import { SprikeyClient } from "@structs/SprikeyClient";
-import { Categories, Command, CommandArguments } from "@structs/typedefs/Command";
-import { Message } from "discord.js";
+import { CommandParameters, SprikeyCommand } from "@structs/SprikeyCommand";
+import { formatTime } from "@util/formatTime";
+import { Message, MessageEditOptions } from "discord.js";
 
-export default class PingCommand extends Command<PingArgs> {
+export default class PingCommand extends SprikeyCommand {
 
   constructor() {
-    super(`ping`, {
-      description: `View the bot's ping! (or play the fun minigame)`,
-      category: Categories.General,
-      icon: ICONS.PING,
-      args: new CommandArguments({
-        blank: `to view the bot's ping`
+    super("ping", {
+      description: "View the bot's ping! (or play the fun minigame)",
+      parameters: new CommandParameters({
+        blank: "to play a reaction time game and view the bot's ping!",
+        usages: [ {
+          title: "View the reaction time record",
+          parameters: [ "--viewRecord" ]
+        } ]
       })
+    }, {
+      args: [ {
+        id: "isViewingRecord",
+        match: "flag",
+        flag: "--viewRecord"
+      } as const ]
     });
   }
 
-  async run(client: SprikeyClient, { channel }: Message, { content }: PingArgs): Promise<void> {
+  async exec({ channel }: Message, { isViewingRecord }: PingParameters): Promise<void> {
+    const pingRecord = await this.client.botOptions.get("pingRecord");
 
-    const pingRecord = await client.botOptions.get(`pingRecord`);
+    if (isViewingRecord) return this.showRecordHolder(channel, pingRecord);
 
-    if ((/record/i).test(content)) {
-      const recordHolder = client.users.cache.get(pingRecord.memberID)?.username ?? pingRecord.memberID;
-      return void channel.send(`${recordHolder} holds the record for the fastest reaction time of ${toUnit(pingRecord.time)}!`);
-    }
+    return this.runPingGame(channel, pingRecord);
+  }
 
-    const pingMsg = await channel.send(this.embeds.default(`Ping?`));
+  showRecordHolder(channel: Message["channel"], { memberID, time }: PingRecord): void {
+    const recordHolder = this.client.users.cache.get(memberID)?.username ?? memberID;
 
-    await channel.awaitMessages((awaitedMessage: Message) => !awaitedMessage.author.bot, {
+    return void channel.send(`${recordHolder} holds the record for the fastest reaction time of ${formatTime(time)}!`);
+  }
+
+  async runPingGame(channel: Message["channel"], { time = Infinity }: PingRecord): Promise<void> {
+
+    const pingMessage = await channel.send(this.embeds.default("Ping?"));
+
+    const intermediateMessage = await this.getIntermediateMessage(channel, pingMessage);
+
+    if (!intermediateMessage || pingMessage.deleted) return;
+
+    const timeTaken = intermediateMessage.createdTimestamp - pingMessage.createdTimestamp;
+    const isWinner = time > timeTaken;
+
+    void pingMessage.edit(this.getReactionGameMessage(isWinner, intermediateMessage, timeTaken));
+
+    if (isWinner) await this.client.botOptions.update("pingRecord", {
+      time: timeTaken,
+      memberID: intermediateMessage.author.id
+    });
+
+  }
+
+  private async getIntermediateMessage(
+    channel: Message["channel"],
+    pingMessage: Message
+  ): Promise<Message | undefined> {
+    const awaitedMessages = await channel.awaitMessages(filterBotMessages, {
       max: 1,
-      time: 10000,
-      errors: [ `time` ]
+      time: 5000,
+      errors: [ "time" ]
     })
-      .then(async collected => {
-        if (pingMsg.deleted) return;
+      .catch(() => {
+        if (pingMessage.deleted) return null;
 
-        const intermediateMessage = collected.first() as Message;
-        const timeTaken = intermediateMessage.createdTimestamp - pingMsg.createdTimestamp;
+        void pingMessage.edit(this.getPongMessage());
+      });
 
-        const isWinner = (pingRecord.time || Infinity) > timeTaken;
-        void pingMsg.edit(``, { embed: this.embeds.default(`Pong! \`${Math.round(client.ws.ping)} ms\``)
-          .setFooter(
-            `${isWinner ? `👑 ` : ``}${intermediateMessage.author.tag} in ${toUnit(timeTaken)}!`,
-            intermediateMessage.author.displayAvatarURL({ format: `png`, dynamic: true })
-          )
-        });
+    return awaitedMessages?.first();
+  }
 
-        if (isWinner) await client.botOptions.update(`pingRecord`, {
-          time: timeTaken,
-          memberID: intermediateMessage.author.id
-        });
+  private getPongMessage(): MessageEditOptions {
+    return {
+      embed: this.embeds.default(`Pong! \`${Math.round(this.client.ws.ping)}ms\``)
+    };
+  }
 
-      })
-      .catch(() => pingMsg.deleted
-        ? pingMsg.edit(``, {
-            embed: {
-              title: `Ping`,
-              description: `Pong! \`\`${Math.round(client.ws.ping)} ms\`\``,
-              color: 5865983
-            }
-          })
-        : pingMsg
-      );
+  private getReactionGameMessage(isWinner: boolean, intermediateMessage: Message, timeTaken: number): MessageEditOptions {
+    return {
+      embed: this.embeds.default(`Pong! \`${Math.round(this.client.ws.ping)}ms\``)
+        .setFooter(
+          `${isWinner ? "👑 " : ""}${intermediateMessage.author.tag} in ${formatTime(timeTaken)}!`,
+          intermediateMessage.author.displayAvatarURL({ format: "png", dynamic: true })
+        )
+    };
   }
 
 }
 
-function toUnit(time: number): string {
-  const sec = Math.floor(time % 60000 / 1000);
-  const ms = Math.floor(time % 60000 % 1000);
-  const sDisplay = sec > 0 ? `${sec}s, ` : ``;
-  const msDisplay = ms > 0 ? `${ms}ms` : ``;
-
-  return sDisplay + msDisplay;
+function filterBotMessages(awaitedMessage: Message): boolean {
+  return !awaitedMessage.author.bot;
 }
 
-interface PingArgs {
-  content: string;
+interface PingParameters {
+  readonly isViewingRecord: boolean;
+}
+
+interface PingRecord {
+  memberID: string;
+  time: number;
 }
