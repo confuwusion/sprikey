@@ -29,7 +29,6 @@ export default class ExecCommand extends SprikeyCommand {
     });
   }
 
-  // eslint-disable-next-line complexity, class-methods-use-this
   async exec(message: Message, { content }: ExecArgs): Promise<void> {
 
     const vmContext = {
@@ -68,7 +67,7 @@ export default class ExecCommand extends SprikeyCommand {
 
 const relevantErrorExtractor = /((?:[^\n]+\n){3})\n([^\n]+)\n\s+at eval:(\d+:\d+)[^]+$/u;
 const newlinePattern = /\n/gu;
-// eslint-disable-next-line complexity
+
 function generateErrorMessage(error: Error): string {
 
   const [ , errorIndicator, errorMessage, errorPosition ] = relevantErrorExtractor.exec(error.stack ?? "") || [];

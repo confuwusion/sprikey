@@ -70,7 +70,6 @@ export default class LogCommand extends ActionCommand {
     await channel.send(this.embeds.success(`Successfully set channel <#${channelID}> as **${type}** channel!`));
   }
 
-  // eslint-disable-next-line complexity
   * parser() {
     const action = (yield) as unknown as typeof logActions[number];
     if (action === "view") return { action };
