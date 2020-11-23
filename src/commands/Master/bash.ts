@@ -21,7 +21,8 @@ export default class BashCommand extends SprikeyCommand {
         id: "code",
         match: "content",
         otherwise: () => this.embeds.error("You did not provie an input!")
-      } ]
+      } ],
+      ownerOnly: true
     });
   }
 

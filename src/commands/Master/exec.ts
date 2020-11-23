@@ -25,7 +25,8 @@ export default class ExecCommand extends SprikeyCommand {
         id: "content",
         type: "string",
         match: "content"
-      } ]
+      } ],
+      ownerOnly: true
     });
   }
 

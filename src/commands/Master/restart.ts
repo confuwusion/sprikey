@@ -9,6 +9,8 @@ export default class RestartCommand extends SprikeyCommand {
       parameters: new CommandParameters({
         blank: "to restart the bot"
       })
+    }, {
+      ownerOnly: true
     });
   }
 
