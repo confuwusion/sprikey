@@ -97,7 +97,7 @@ export class PermissionsManager {
 
   reloadMemberHierarchies(): void {
     const selectedGuild = `${this.client.botIdentity.toUpperCase()}_GUILD` as "MAIN_GUILD" | "TEST_GUILD";
-    const remainingStaff = this.client[selectedGuild].members.cache
+    const remainingStaff = this.client[selectedGuild]!.members.cache
       .filter(member => member.id !== MASTER_ID && STAFF_ROLES.some(STAFF_ROLE => member.roles.cache.has(STAFF_ROLE)));
     this.memberHierarchies.sweep((memberHierarchy, memberID) => remainingStaff.has(memberID));
   }

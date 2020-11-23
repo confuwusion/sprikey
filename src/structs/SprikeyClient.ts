@@ -72,7 +72,7 @@ export class SprikeyClient extends AkairoClient {
     };
   }
 
-  get MAIN_GUILD(): Guild {
+  get MAIN_GUILD(): Guild | undefined {
     return this.guilds.cache.get(GUILD.MAIN)!;
   }
 
