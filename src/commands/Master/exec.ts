@@ -72,13 +72,14 @@ function generateErrorMessage(error: Error): string {
 
   const [ , errorIndicator, errorMessage, errorPosition ] = relevantErrorExtractor.exec(error.stack ?? "") || [];
 
-  return `${errorIndicator.replace(newlinePattern, "\n  ")}${errorMessage}
-    at exec ${errorPosition}`;
+  return `${errorIndicator.replace(newlinePattern, "  \n")}
+${errorMessage}
+  at exec ${errorPosition}`;
 }
 
 function getOutputContent(execBenchmark: Benchmark, evalOutput: string): string {
   return `${`**Execution Time:** \`${execBenchmark.display()}\``} \`\`\`js
-< ${evalOutput}
+${evalOutput}
 \`\`\``;
 }
 
