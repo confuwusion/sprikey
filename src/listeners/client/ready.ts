@@ -1,8 +1,9 @@
 import { GUILD } from "@constants/Guild";
+import { EMOTES } from "@constants/Icons";
 import { ROLES } from "@constants/Roles";
 import { SprikeyClient } from "@structs/SprikeyClient";
 import SprikeyListener from "@structs/SprikeyListener";
-import { Guild, Role } from "discord.js";
+import { Guild, Message, Role } from "discord.js";
 
 export default class ReadyListener extends SprikeyListener {
 
@@ -56,21 +57,7 @@ async function ready(client: SprikeyClient): Promise<void> {
   // });
 
   await enableBot(client);
-
-  // if (cache.restartMessage.channelID) {
-  //   const { channelID, messageID } = cache.restartMessage;
-  //   const restartMessage = await client.channels.cache.get(channelID).messages.fetch(messageID);
-
-  //   if (restartMessage) {
-  //     (async function() {
-  //       await restartMessage.reactions.removeAll();
-  //       await restartMessage.react(`709510035960496149`);
-  //     })();
-
-  //     delete cache.restartMessage;
-  //     cache.save(`restartMessage`);
-  //   }
-  // }
+  await updateRestartMessage(client);
 
   console.log("Bot is now listening to events!");
   console.timeEnd("Initiation");
@@ -104,4 +91,20 @@ async function enableBot(client: SprikeyClient): Promise<void> {
       type: "PLAYING"
     }
   });
+}
+
+async function updateRestartMessage({ botOptions, channels }: SprikeyClient) {
+  const restartMessageData = await botOptions.get("restartMessage");
+  if (!restartMessageData) return;
+
+  const { channelID, messageID } = restartMessageData;
+  const sourceChannel = channels.cache.get(channelID) as Message["channel"] | undefined;
+  const restartMessage = await sourceChannel?.messages.fetch(messageID);
+
+  if (!restartMessage) return;
+
+  await restartMessage.reactions.removeAll();
+  await restartMessage.react(EMOTES.check);
+
+  await botOptions.update("restartMessage", { channelID: "", messageID: "" });
 }
