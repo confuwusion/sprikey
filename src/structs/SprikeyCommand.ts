@@ -149,7 +149,7 @@ export class CommandParameters implements CommandParametersEntry {
   constructor({
     usages = [],
     blank = ""
-  }: Partial<Omit<CommandParameters, "usages">> & { readonly usages: Optional<CommandUsageEntry, "description">[] }) {
+  }: Partial<Omit<CommandParameters, "usages">> & { readonly usages?: Optional<CommandUsageEntry, "description">[] }) {
     this.blank = blank;
     this.usages = usages.map(usage => new CommandUsage(usage));
   }
