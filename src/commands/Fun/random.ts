@@ -36,7 +36,9 @@ export default class RandomCommand extends SprikeyCommand {
       `**${selectedItem}**. Take it or leave it.`,
       `**${selectedItem}**. Easy pick.`,
       `**${selectedItem}** makes my legs tickle...`,
-      `It's **${selectedItem}** time!`
+      `It's **${selectedItem}** time!`,
+      `**${selectedItem}** really makes me *DiscordAPIError: Missing Permissions*!`,
+      `Neither. :rage:`
     ];
 
     return channel.send(this.embeds.default(randomElement(outputMessages)));
